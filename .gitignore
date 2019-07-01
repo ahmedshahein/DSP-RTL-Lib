@@ -1,0 +1,17 @@
+work
+source
+layout
+log
+synthesis
+*.vcd
+*.ini
+*.vvp
+qflow*
+a.out
+*.gch
+obj
+bin
+*.layout
+*.depend
+BKP
+.*
