@@ -1,0 +1,7 @@
+#!/bin/bash
+
+vlog rtl/cordic_pkg.sv
+vsim -c work.cordic_pkg_tb -do "run; exit;"
+
+vlog rtl/cordic.v sim/testbench/cordic_tb.sv 
+vsim work.cordic_tb
