@@ -4,6 +4,7 @@ layout
 log
 synthesis
 *.vcd
+*.wlf
 *.ini
 *.vvp
 qflow*
