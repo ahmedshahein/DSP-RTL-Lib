@@ -1,5 +1,5 @@
 // Code your design here
-`define p_row       dut.gp_decimation_factor
+`define p_row       dut.gp_interpolation_factor
 `define p_col       dut.c_col
 `define p_mul_oup_w dut.c_mul_out_width
 `define p_add_oup_w dut.c_sum_out_width

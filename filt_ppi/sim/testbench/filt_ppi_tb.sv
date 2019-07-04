@@ -7,16 +7,17 @@
 `include "defines.sv"
 // -------------------------------------------------------------------
 module filt_ppi_tb;
-  time CLK_PERIOD = 50;
+  time CLK_PERIOD = 400;
+  time F_CLK_PERIOD = CLK_PERIOD/`P_INTERPOLATION;
   
   reg       i_rst_an;
-  reg       i_ena;
-  wire       i_clk;
+  reg       i_ena=1'b0;
+  reg       i_clk;
   reg       f_clk=1'b0;
-  reg      s_clk = 1'b0;
-  int r_cnt='d0;
-  
-  integer error_count=0;
+  reg       s_clk;
+  int       r_cnt=`P_INTERPOLATION;
+  reg [1:0] r_start_chk='d0;
+  integer   error_count=0;
   
   reg                             data_ready;
   reg  signed [`P_INP_DATA_W-1:0] i_data;
@@ -29,40 +30,41 @@ module filt_ppi_tb;
   reg [8*64:1]                    filename_mat_oup;
   integer                         fid_mat_oup;
   integer                         status_mat_oup;
-  reg signed [`P_OUP_W-1:0]       o_data_mat;
+  reg  signed [`P_OUP_W-1:0]      r_data_mat;
+  reg  signed [`P_OUP_W-1:0]      sr_data_mat [0:`P_INTERPOLATION];
+  wire signed [`P_OUP_W-1:0]      o_data_mat;
 // -------------------------------------------------------------------    
   initial
-    begin: GEN_RST
-           i_rst_an = 1'b1;
-      #170 i_rst_an = 1'b0;
-      #205 i_rst_an = 1'b1;
+    begin: RST
+                        i_rst_an = 1'b1;
+      #2                i_rst_an = 1'b0;
+      #(0.5*CLK_PERIOD) i_rst_an = 1'b1;
+    end
+
+  always @(posedge s_clk) 
+    begin: EGU
+      if (i_rst_an)
+      i_ena = 1'b1;
     end
   
-  initial
-    begin: GEN_ENA
-           i_ena = 1'b0;
-      #460 i_ena = 1'b1;
-    end
-  
-  /*initial i_clk = 1'b0;
-  always
-    begin: GEN_CLK
-      i_clk = #(CLK_PERIOD) ~i_clk;
-    end*/
-  
-  initial f_clk = 1'b0;
-  always f_clk = #(CLK_PERIOD/`P_INTERPOLATION) ~f_clk;
+  always f_clk = #(F_CLK_PERIOD/2) ~f_clk;
   
   always @(posedge f_clk)
-    begin
+    begin: SCLK
       if (r_cnt<`P_INTERPOLATION-1)
         r_cnt <= r_cnt + 1;
       else
         r_cnt <= 'd0;
+	
+      i_clk <= s_clk;
     end
- assign i_clk = (r_cnt<`P_INTERPOLATION/2) ? 1'b1 : 1'b0;   
- 
-  initial data_ready = 0;
+  assign s_clk = (r_cnt<`P_INTERPOLATION/2) ? 1'b1 : 1'b0;   
+
+  always @(posedge i_clk)
+    begin: FLAG_START_CHK
+      if (r_start_chk < 3)
+        r_start_chk <= r_start_chk + 1;
+    end
 
   initial
     begin: TEXTIO_READ_IN
@@ -108,20 +110,23 @@ module filt_ppi_tb;
   always @(posedge f_clk)
     begin: MATLAB_RESPONSE
       if (i_rst_an && i_ena)
-        status_mat_oup = $fscanf(fid_mat_oup,"%d\n", o_data_mat);
+        status_mat_oup = $fscanf(fid_mat_oup,"%d\n", r_data_mat);
+	
+      sr_data_mat[0] <= r_data_mat;
+      sr_data_mat[1:`P_INTERPOLATION] <= sr_data_mat[0:`P_INTERPOLATION-1];
     end
+  assign o_data_mat =  sr_data_mat[`P_INTERPOLATION];
  
   filt_ppi #(
-    .gp_idata_width       (`P_INP_DATA_W ),  
+    .gp_idata_width          (`P_INP_DATA_W   ),  
     .gp_interpolation_factor (`P_INTERPOLATION),
-    .gp_coeff_length      (`P_COEFF_L    ),
-    .gp_coeff_width       (`P_COEFF_W    ),
-    .gp_tf_df	          (`P_TF_DF      ),
-//    .gp_comm_reg_oup	  (`P_COMM_R_OUP ),
-    .gp_comm_ccw          (`P_COMM_CCW_CW),
-    .gp_mul_ccw           (`P_MUL_CCW_CW ),
-    .gp_comm_phase	  (`P_COMM_PHA   ),
-    .gp_odata_width       (              )
+    .gp_coeff_length         (`P_COEFF_L      ),
+    .gp_coeff_width          (`P_COEFF_W      ),
+    .gp_tf_df	             (`P_TF_DF        ),
+    .gp_comm_ccw             (`P_COMM_CCW_CW  ),
+    .gp_mul_ccw              (`P_MUL_CCW_CW   ),
+    .gp_comm_phase	     (`P_COMM_PHA     ),
+    .gp_odata_width          (`P_OUP_W        )
   ) dut (
     .i_rst_an (i_rst_an  ),
     .i_ena    (i_ena     ),
@@ -129,47 +134,17 @@ module filt_ppi_tb;
     .i_data   (i_data    ),
     .i_fclk   (f_clk     ),
     .o_data   (o_data_rtl),
-    .o_sclk   (     )
+    .o_sclk   (          )
   );
-  
-  `define P_COL dut.ppi_mul_add.c_col
-  `define P_ROW `P_INTERPOLATION
-  int z;
-  reg [`P_INTERPOLATION*`P_OUP_W-1:0]     r_mul;
-  
-  initial assign s_clk = dut.w_sclk;
-  initial assign r_mul = dut.mul_add_2_comm;
-  
-  always @(posedge s_clk)
-    begin
-      z=0;
-      for (int i = 0; i < `P_COL; i++) begin
-        for (int j = 0; j < `P_ROW; j++) begin          
-          $write(" MUL:: ", $signed(r_mul[z*`P_OUP_W +: `P_OUP_W]));
-	  z++;
-        end
-	$display("\n");
-      end 
-    end
     
-  always @(negedge s_clk)
-    begin
-      if (i_rst_an && i_ena)
+  always @(negedge f_clk)
+    begin: ASSERT_OUP_CHK
+      if (i_rst_an && i_ena && (r_start_chk == 3))
         assert (o_data_rtl == o_data_mat) 
 	else
 	  begin 
 	    $error("### RTL = %d, MAT = %d", o_data_rtl, o_data_mat); error_count<= error_count + 1;
 	  end
     end
-                  
-  /*initial
-    begin
-      $dumpfile("filt_ppd_tb.vcd");
-      $dumpvars;
-      #3000;
-      $finish;
-    end*/
     
 endmodule
-//iverilog -o ppd -g2x filt_ppd_tb.sv commutator.v mul_add.v filt_ppd.v
-//vvp ppd

@@ -61,7 +61,7 @@ module commutator_tb;
     begin
       $dumpfile("commutator_tb.vcd");
       $dumpvars;
-      #3000;
+      #30000;
       $finish;
     end
 endmodule

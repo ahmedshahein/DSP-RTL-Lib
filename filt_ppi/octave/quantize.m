@@ -1,23 +1,46 @@
-function q_data = quantize(r_data, Q, QType)
+function q_data = quantize(r_data, Q, QType, DType)
   
-  QLevels = quantizer(Q, QType);
-  for i = 1 : length(r_data),
-    if (r_data(i) >= 0),
-      for j = length(QLevels)/2 : length(QLevels),
-        if (r_data(i) >= QLevels(end))
-          q_data(i) = QLevels(end);
-        elseif (r_data(i)>=QLevels(j) && r_data(i)<QLevels(j+1))
-          q_data(i) = QLevels(j);
-        endif
-      endfor
+  if length(r_data) > 1
+    if mod(length(r_data), 2) == 0, % EVEN
+      if ( r_data(1:length(r_data)/2) == r_data(length(r_data)/2+1:end) )
+        arr_type = "even";
+        half_array = r_data(1:length(r_data)/2);
+        disp("### INFO: The input array has even symmetry!");
+      else
+        arr_type = "nosymm";
+        half_array = r_data;
+        disp("### INFO: The input array has even asymmetry");
+      endif
     else
-      for j = 1 : length(QLevels)/2,
-        if (r_data(i) <= QLevels(1))
-          q_data(i) = QLevels(1);
-        elseif (r_data(i)<=QLevels(j) && r_data(i)>QLevels(j-1))
-          q_data(i) = QLevels(j);
-        endif   
-      endfor
-    endif  
-  endfor
+      if ( r_data(1:floor(length(r_data)/2)) == r_data(ceil(length(r_data)/2)+1:end) )
+        arr_type = "odd";
+        half_array = r_data(1:ceil(length(r_data)/2));
+        disp("### INFO: The input array has odd asymmetry!");
+      else
+        arr_type = "nosymm";
+        half_array = r_data;
+      endif      
+    endif
+  endif
+  
+  QLevels = quantizer(Q, QType, DType);
+  q_data_half = zeros(1, length(half_array));
+  
+  for i = 1 : length(half_array)
+    if (half_array(i) >= 0)
+      [value,idx] = min(abs(half_array(i) - QLevels(length(QLevels)/2+1:end)));
+      q_data_half(i) = QLevels(length(QLevels)/2+idx);
+    else
+      [value,idx] = min(abs(half_array(i) - QLevels(1:length(QLevels)/2)));
+      q_data_half(i) = QLevels(idx);      
+    endif
+  endfor  
+  
+  if strcmp(arr_type, "nosymm")
+    q_data = q_data_half;
+  elseif strcmp(arr_type, "even")
+    q_data = [q_data_half fliplr(q_data_half)];
+  elseif strcmp(arr_type, "odd")
+    q_data = [q_data_half fliplr(q_data_half(1:end-1))];
+  endif
   

@@ -45,7 +45,16 @@ module mul_add #(
   /***********************/
   /* FILTER COEFFICIENTS */
   /***********************/
-  `include "filt_coeff.v"
+  assign c_coeff[0] = -8'sd2;
+assign c_coeff[1] =  8'sd0;
+assign c_coeff[2] =  8'sd2;
+assign c_coeff[3] =  8'sd5;
+assign c_coeff[4] =  8'sd8;
+assign c_coeff[5] =  8'sd11;
+assign c_coeff[6] =  8'sd14;
+assign c_coeff[7] =  8'sd16;
+assign c_coeff[8] =  8'sd17;
+
 
   /***********************/
   /* CONSTANT MULTIPLIER */

@@ -4,19 +4,19 @@
 `define DIV(N, D) (N%D==0) ? (N/D) : (N/D+1)
 // -------------------------------------------------------------------
 module mul_add #(
-  parameter gp_idata_width       = 8,                                    // Set input data width
-  parameter gp_interpolation_factor = 4,                                    // Set number of output channels
-  parameter gp_coeff_length      = 12,                                   // Set filter coefficient length
-  parameter gp_coeff_width       = 8,                                    // Set filter coefficient filter bit-width
-  parameter gp_tf_df             = 0,                                    // Select filter topology 1-> TF | 0-> DF  
-  parameter gp_ccw               = 0,                                    // Select multiplier 1-> Counter Clock Wise | 0 -> Clock Wise
-  parameter gp_odata_width       = gp_idata_width+gp_coeff_width+(`DIV(gp_coeff_length,gp_interpolation_factor))
-                                                                         // Set output bit-width
+  parameter gp_idata_width          = 8,                 // Set input data width
+  parameter gp_interpolation_factor = 32,                // Set number of output channels
+  parameter gp_coeff_length         = 53,                // Set filter coefficient length
+  parameter gp_coeff_width          = 16,                // Set filter coefficient filter bit-width
+  parameter gp_tf_df                = 1,                 // Select filter topology 1-> TF | 0-> DF  
+  parameter gp_ccw                  = 0,                 // Select multiplier 1-> Counter Clock Wise | 0 -> Clock Wise
+  parameter gp_odata_width          = ( gp_idata_width+gp_coeff_width+(`DIV(gp_coeff_length,gp_interpolation_factor)) )*gp_interpolation_factor
+                                                         // Set output bit-width
 ) (
-  input  wire                                                  i_rst_an, // Asynchronous active low reset
-  input  wire                                                  i_ena,	 // Synchronous active high enable
-  input  wire                                                  i_clk,	 // Rising-edge clock
-  input  wire signed [gp_idata_width-1:0]                      i_data,	 // Input data with gp_idata_width bits MSB:LSB, signed
+  input  wire                             i_rst_an,      // Asynchronous active low reset
+  input  wire                             i_ena,	 // Synchronous active high enable
+  input  wire                             i_clk,	 // Rising-edge clock
+  input  wire signed [gp_idata_width-1:0] i_data,	 // Input data with gp_idata_width bits MSB:LSB, signed
   output wire signed [gp_odata_width-1:0] o_data	 // Output data with gp_interpolation_factor x gp_idata_width width MSB:LSB, signed
 );
 // -------------------------------------------------------------------
@@ -28,12 +28,12 @@ module mul_add #(
   localparam c_sum_out_width    = c_mul_out_width      + c_col;
   localparam c_reg_out_width    = (gp_tf_df) ? c_sum_out_width : gp_idata_width;
   // WIRE DECLARATION
-  wire signed [gp_coeff_width-1                                    :0] c_coeff [0:c_coeff_2-1]; 
-  wire signed [c_mul_out_width*c_row_x_col-1                       :0] w_mul;
-  wire signed [c_sum_out_width*c_row_x_col-1                       :0] w_sum;
-  wire signed [c_reg_out_width*(c_row_x_col-gp_interpolation_factor)-1:0] w_reg;//only TF for now
+  wire signed [gp_coeff_width-1                                       :0] c_coeff [0:c_coeff_2-1]; 
+  wire signed [c_mul_out_width*c_row_x_col-1                          :0] w_mul;
+  wire signed [c_sum_out_width*c_row_x_col-1                          :0] w_sum;
+  wire signed [c_reg_out_width*(c_row_x_col-gp_interpolation_factor)-1:0] w_reg;
   // GENERATE VARIABLES DECLARATION
-  genvar i, j, k, l, m, n, o;
+  genvar i;
 // -------------------------------------------------------------------
   /***********************/
   /* FILTER COEFFICIENTS */
@@ -89,16 +89,16 @@ module mul_add #(
 	    if (gp_ccw)
 	      begin: g_ccw
 	        if (i<(c_row_x_col-gp_interpolation_factor))
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]) + $signed(w_reg[(i+1)*c_reg_out_width-1 -: c_reg_out_width]);
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}) + $signed(w_reg[(i+1)*c_reg_out_width-1 -: c_reg_out_width]);
 		else
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]); 
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}); 
 	      end
 	    else
 	      begin: g_cw
 	        if (i<gp_interpolation_factor)
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]);
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]});
 		else
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]) + $signed(w_reg[(i-gp_interpolation_factor+1)*c_reg_out_width-1 -: c_reg_out_width]);
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}) + $signed(w_reg[(i-gp_interpolation_factor+1)*c_reg_out_width-1 -: c_reg_out_width]);
 	      end
 	  end
 	  
@@ -214,16 +214,16 @@ module mul_add #(
 	    if (gp_ccw)
 	      begin: g_ccw
 	        if (i<gp_interpolation_factor)
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]);
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]});
 		else
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]) + $signed(w_sum[(i-gp_interpolation_factor+1)*c_sum_out_width-1 -: c_sum_out_width]); 
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}) + $signed(w_sum[(i-gp_interpolation_factor+1)*c_sum_out_width-1 -: c_sum_out_width]); 
 	      end
 	    else
 	      begin: g_cw
 	        if (i<c_row_x_col-gp_interpolation_factor)
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]) + $signed(w_sum[(i+gp_interpolation_factor+1)*c_sum_out_width-1 -: c_sum_out_width]);
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}) + $signed(w_sum[(i+gp_interpolation_factor+1)*c_sum_out_width-1 -: c_sum_out_width]);
 		else
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]);
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]});
 	      end
 	  end
 	  

@@ -4,32 +4,32 @@
 // 
 // -------------------------------------------------------------------
 module commutator #(
-  parameter gp_ccw               = 1,                                     // Select: Counter Clock Wise | Clock Wise
-  parameter gp_idata_width       = 4,                                     // Set input data width
-  parameter gp_interpolation_factor = 4,                                     // Set number of output channels
-  parameter gp_phase             = 0                                      // Select downsample phase: 0:gp_interpolation_factor-1
+  parameter gp_ccw                  = 1,                                     // Select: Counter Clock Wise | Clock Wise
+  parameter gp_idata_width          = 26,                                    // Set input data width
+  parameter gp_interpolation_factor = 32,                                    // Set number of output channels
+  parameter gp_phase                = 0                                      // Select upsample phase: 0:gp_interpolation_factor-1
   )                              
 (
-  input  wire                                                  i_rst_an,  // Asynchronous active low reset
-  input  wire                                                  i_ena,     // Synchronous active high enable
-  input  wire                                                  i_clk,     // Rising-edge clock
+  input  wire                                                     i_rst_an,  // Asynchronous active low reset
+  input  wire                                                     i_ena,     // Synchronous active high enable
+  input  wire                                                     i_clk,     // Rising-edge clock
   input  wire signed [gp_interpolation_factor*gp_idata_width-1:0] i_data,    // Input data with gp_idata_width bits MSB:LSB, signed
-  output wire signed [gp_idata_width-1:0]                      o_data,    // Unsigned data with gp_interpolation_factor x gp_idata_width width MSB:LSB
-  output wire                                                  o_clk      // Slow clock pulsed output
+  output wire signed [gp_idata_width-1:0]                         o_data,    // Unsigned data with gp_interpolation_factor x gp_idata_width width MSB:LSB
+  output wire                                                     o_clk      // Slow clock pulsed output
 );
 // -------------------------------------------------------------------
   // CONSTANT DECLARATION
   localparam c_cnt_width = gp_interpolation_factor;
-  localparam c_idx_width = $clog2(gp_interpolation_factor);
+  localparam c_idx_width = $clog2(gp_interpolation_factor)+1;
   // REGISTER DECLARATION
-  reg         [c_cnt_width-1:0]                         r_ring_cnt;
-  reg         [c_idx_width-1:0]                         r_idx;
-  reg                                                   r_done;    
+  reg         [c_cnt_width-1:0]                            r_ring_cnt;
+  reg         [c_idx_width-1:0]                            r_idx;
+  reg                                                      r_done;    
   // WIRE DECLARATION    
   wire signed [gp_interpolation_factor*gp_idata_width-1:0] d_data;
   wire signed [gp_interpolation_factor*gp_idata_width-1:0] w_data;
-  wire                                                  w_done;
-  wire w_ena;
+  wire                                                     w_done;
+  wire                                                     w_ena;
   genvar x;
 // -------------------------------------------------------------------  
   generate
@@ -60,7 +60,7 @@ module commutator #(
                     r_ring_cnt[c_cnt_width-2:0] <= r_ring_cnt[c_cnt_width-1:1];  
                   end
 		
-		if (r_idx < gp_interpolation_factor)
+		if (r_idx < gp_interpolation_factor-1)
 		  r_idx <= r_idx+1'b1;
 		else
 		  r_idx <= 'd0;		  
@@ -73,6 +73,7 @@ module commutator #(
 	if (gp_phase==0)
 	  begin: SR_PHASE_EQ_0
 	    assign d_data = i_data;
+	    assign w_ena  = 1'b1;
 	  end
 	else	  
 	  begin: g_phase_alignment
@@ -122,6 +123,7 @@ module commutator #(
               end
             else if (i_ena)
               begin
+	      if (w_ena) begin
                 if (r_ring_cnt == 'd0)
                   begin
                     r_ring_cnt[0] <= 1'b1;
@@ -132,18 +134,20 @@ module commutator #(
                     r_ring_cnt[c_cnt_width-1:1] <= r_ring_cnt[c_cnt_width-2:0];
                   end
 		  
-		if (r_idx < gp_interpolation_factor)
+		if (r_idx < gp_interpolation_factor-1)
 		  r_idx <= r_idx+1'b1;
 		else
 		  r_idx <= 'd0;
 		
 		r_done     <= w_done;
               end
+	      end
           end//ALWAYS 
 
 	if (gp_phase==0)
 	  begin: SR_PHASE_EQ_0
 	    assign d_data = i_data;
+	    assign w_ena  = 1'b1;
 	  end
 	else	  
 	  begin: g_phase_alignment
@@ -156,7 +160,7 @@ module commutator #(
 	      .i_clk        (i_clk),  
 	      .i_data       (i_data), 
 	      .o_data       (d_data),
-	      .o_shift_done ()  
+	      .o_shift_done (w_ena)  
 	    );
 	  end
 	    
@@ -172,7 +176,7 @@ module commutator #(
               .o_data   (w_data[(x+1)*gp_idata_width-1:x*gp_idata_width])
             );
           end
-	  
+
         assign o_data = w_data[(r_idx+1)*gp_idata_width-1 -: gp_idata_width]; 
 	         
         assign w_done = (r_ring_cnt[c_cnt_width-1]) ? 1'b1 : 1'b0;
@@ -180,7 +184,6 @@ module commutator #(
   endgenerate
 
 assign o_clk  = r_done;
-assign o_pclk = r_ring_cnt;
     
 endmodule
 

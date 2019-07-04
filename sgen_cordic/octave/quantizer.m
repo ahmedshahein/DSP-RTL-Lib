@@ -8,7 +8,6 @@ function QLevels = quantizer(Q, QType, DType)
 % midtread has 0 value
 % OUTPUT DATA:-
 % QLevels: Array of size 2^Q
-
   nol = 2^Q;
   if (strcmp(QType,"midtread"))
     for (i = 1:nol),
