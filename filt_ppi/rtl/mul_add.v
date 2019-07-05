@@ -89,16 +89,16 @@ module mul_add #(
 	    if (gp_ccw)
 	      begin: g_ccw
 	        if (i<(c_row_x_col-gp_interpolation_factor))
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}) + $signed(w_reg[(i+1)*c_reg_out_width-1 -: c_reg_out_width]);
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]) + $signed(w_reg[(i+1)*c_reg_out_width-1 -: c_reg_out_width]);
 		else
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}); 
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]); 
 	      end
 	    else
 	      begin: g_cw
 	        if (i<gp_interpolation_factor)
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]});
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]);
 		else
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}) + $signed(w_reg[(i-gp_interpolation_factor+1)*c_reg_out_width-1 -: c_reg_out_width]);
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]) + $signed(w_reg[(i-gp_interpolation_factor+1)*c_reg_out_width-1 -: c_reg_out_width]);
 	      end
 	  end
 	  
@@ -214,16 +214,16 @@ module mul_add #(
 	    if (gp_ccw)
 	      begin: g_ccw
 	        if (i<gp_interpolation_factor)
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]});
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]);
 		else
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}) + $signed(w_sum[(i-gp_interpolation_factor+1)*c_sum_out_width-1 -: c_sum_out_width]); 
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]) + $signed(w_sum[(i-gp_interpolation_factor+1)*c_sum_out_width-1 -: c_sum_out_width]); 
 	      end
 	    else
 	      begin: g_cw
 	        if (i<c_row_x_col-gp_interpolation_factor)
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]}) + $signed(w_sum[(i+gp_interpolation_factor+1)*c_sum_out_width-1 -: c_sum_out_width]);
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]) + $signed(w_sum[(i+gp_interpolation_factor+1)*c_sum_out_width-1 -: c_sum_out_width]);
 		else
-		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed({{(c_sum_out_width-c_mul_out_width){w_mul[(i+1)*c_mul_out_width-1]}},w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]});
+		  assign w_sum[(i+1)*c_sum_out_width-1 -: c_sum_out_width] = $signed(w_mul[(i+1)*c_mul_out_width-1 -: c_mul_out_width]);
 	      end
 	  end
 	  

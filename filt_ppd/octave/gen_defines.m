@@ -13,7 +13,8 @@ function gen_defines(defines)
   fprintf(fid, "`define P_COMM_CCW_CW \t%d\n",defines.p_comm_ccw);
   fprintf(fid, "`define P_MUL_CCW_CW \t%d\n",defines.p_mul_ccw);
   fprintf(fid, "`define P_COMM_PHA \t%d\n",defines.p_comm_phase);
-  fprintf(fid, "`define P_OUP_W     \t(`P_INP_DATA_W+`P_COEFF_W+`P_DECIMATION+(`DIV(`P_COEFF_L,`P_DECIMATION)))\n");
+  %fprintf(fid, "`define P_OUP_W     \t(`P_INP_DATA_W+`P_COEFF_W+`P_DECIMATION+(`DIV(`P_COEFF_L,`P_DECIMATION)))\n");
+  fprintf(fid, "`define P_OUP_W     \t%d\n", defines.p_data_width+defines.p_coeff_width+ceil(log2(defines.p_decimation_factor))+ceil(log2(defines.p_coeff_length/defines.p_decimation_factor)));
   fprintf(fid, "\n");
   fprintf(fid, "`define TESTCASE\t%d\n",defines.testcase);
   fprintf(fid, "\n");

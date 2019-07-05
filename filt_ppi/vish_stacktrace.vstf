@@ -1,0 +1,29 @@
+# Current time Thu Jul  4 22:16:01 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Thu Jul  4 22:16:01 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0x00003283: '<unknown (@0x3283)>'
+# 3    0x00000005: '<unknown (@0x5)>'
+# transcript error: error writing "stdout": I/O error
+    while executing
+"puts -nonewline stdout $s"
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0xfffffffd: '<unknown (@0xfffffffd)>'
+# 3    0x0ac68cf3: '<unknown (@0xac68cf3)>'
+# 4    0x5f746569: '<unknown (@0x5f746569)>'
+# 5    0x7270205d: '<unknown (@0x7270205d)>'
+# End of Stack Trace
+

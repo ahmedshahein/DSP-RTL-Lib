@@ -4,16 +4,16 @@
 `define DIV(N, D) (N%D==0) ? (N/D) : (N/D+1)
 // -------------------------------------------------------------------
 module filt_ppd #(  
-  parameter gp_idata_width       = 8,                              // Set input data width
-  parameter gp_decimation_factor = 4,                              // Set number of output channels
-  parameter gp_coeff_length      = 17,                             // Set filter coefficient length
-  parameter gp_coeff_width       = 8,                              // Set filter coefficient filter bit-width
-  parameter gp_tf_df             = 1,                              // Select filter topology 1-> TF | 0-> DF   
+  parameter gp_idata_width       = 6,                              // Set input data width
+  parameter gp_decimation_factor = 31,                              // Set number of output channels
+  parameter gp_coeff_length      = 53,                             // Set filter coefficient length
+  parameter gp_coeff_width       = 16,                              // Set filter coefficient filter bit-width
+  parameter gp_tf_df             = 0,                              // Select filter topology 1-> TF | 0-> DF   
   parameter gp_comm_reg_oup      = 1,                              // Select commutator 1-> registered output | 0 -> none-registered
   parameter gp_comm_ccw          = 1,                              // Select commutator 1-> Counter Clock Wise | 0 -> Clock Wise
-  parameter gp_mul_ccw           = 1,                              // Select multiplier 1-> Counter Clock Wise | 0 -> Clock Wise
+  parameter gp_mul_ccw           = 0,                              // Select multiplier 1-> Counter Clock Wise | 0 -> Clock Wise
   parameter gp_comm_phase        = 0,                              // Select downsample phase 0:gp_decimation_factor-1
-  parameter gp_odata_width       = gp_idata_width+gp_coeff_width+gp_decimation_factor+(`DIV(gp_coeff_length,gp_decimation_factor))
+  parameter gp_odata_width       = gp_idata_width+gp_coeff_width+$clog2(gp_decimation_factor)+$clog2(`DIV(gp_coeff_length,gp_decimation_factor))
 				                                   // Set output bit-width
 ) (
   input  wire                             i_rst_an,                // Asynchronous active low reset

@@ -7,13 +7,13 @@ module filt_fir #(
   parameter gp_data_width        = 8,                              // Set input data width
   parameter gp_coeff_length      = 17,
   parameter gp_coeff_width       = 8,
-  parameter gp_tf_df             = 1, // 1-> TF, 0-> DF   
+  parameter gp_tf_df             = 1,                              // 1-> TF, 0-> DF   
   parameter gp_symm              = 1,
   parameter gp_oup_width         = gp_data_width+gp_coeff_width+gp_coeff_length
 ) (
-  input  wire                           i_rst_an,
-  input  wire                           i_ena,
-  input  wire                           i_clk,
+  input  wire                            i_rst_an,
+  input  wire                            i_ena,
+  input  wire                            i_clk,
   input  wire signed [gp_data_width-1:0] i_data,
   output wire signed [gp_oup_width-1:0]  o_data
 );
@@ -26,22 +26,12 @@ module filt_fir #(
   wire signed [gp_coeff_length*c_mul_oup_width-1:0]     w_mul;
   wire signed [gp_coeff_length*c_add_oup_width-1:0]     w_add;
   wire signed [(gp_coeff_length-1)*c_add_oup_width-1:0] r_dly_tf;
-  wire signed [gp_coeff_length*gp_data_width-1:0]       r_dly_df;
-  
+  wire signed [gp_coeff_length*gp_data_width-1:0]       r_dly_df;  
   wire signed [gp_coeff_width-1:0]                      c_coeff [0:c_coeff_2-1];
 // -------------------------------------------------------------------  
   genvar i;
 // -------------------------------------------------------------------  
   `include "filt_coeff.v"
-  /*assign p_coeff[0] =  8'sd0;
-  assign p_coeff[1] = -8'sd2;
-  assign p_coeff[2] =  8'sd6;
-  assign p_coeff[3] = -8'sd17;
-  assign p_coeff[4] =  8'sd37;
-  assign p_coeff[5] = -8'sd64;
-  assign p_coeff[6] =  8'sd95;
-  assign p_coeff[7] = -8'sd119;
-  assign p_coeff[8] =  8'sd127;*/
 // -------------------------------------------------------------------
   generate
     /******************************/
@@ -157,6 +147,5 @@ generate
   else
     assign o_data = w_add[gp_coeff_length*c_add_oup_width-1 -: gp_oup_width];
 endgenerate
-
   
 endmodule

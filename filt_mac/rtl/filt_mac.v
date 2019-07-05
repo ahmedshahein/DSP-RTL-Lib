@@ -27,7 +27,7 @@ module filt_mac #(
   reg  signed [gp_data_width-1  :0] r_delay_line [0:gp_coeff_length-1];
   reg         [c_count_width-1  :0] r_count_coeff;
   reg  signed [c_add_oup_width-1:0] r_add_oup;
-  reg  signed [gp_oup_width-1 :0]   r_data;
+  reg  signed [gp_oup_width-1   :0] r_data;
   // WIRE DECLARATION
   wire signed [gp_coeff_width-1 :0] c_coeff     [0:c_coeff_size-1];
   wire signed [gp_data_width    :0] w_mul_inp_a; // for symmetric filters to avoid overflow of DL addition

@@ -4,13 +4,13 @@
 `define DIV(N, D) (N%D==0) ? (N/D) : (N/D+1)
 // -------------------------------------------------------------------
 module mul_add #(
-  parameter gp_idata_width       = 8,                                    // Set input data width
-  parameter gp_decimation_factor = 4,                                    // Set number of output channels
-  parameter gp_coeff_length      = 17,                                   // Set filter coefficient length
-  parameter gp_coeff_width       = 8,                                    // Set filter coefficient filter bit-width
+  parameter gp_idata_width       = 6,                                    // Set input data width
+  parameter gp_decimation_factor = 31,                                    // Set number of output channels
+  parameter gp_coeff_length      = 53,                                   // Set filter coefficient length
+  parameter gp_coeff_width       = 16,                                   // Set filter coefficient filter bit-width
   parameter gp_tf_df             = 1,                                    // Select filter topology 1-> TF | 0-> DF  
   parameter gp_ccw               = 1,                                    // Select multiplier 1-> Counter Clock Wise | 0 -> Clock Wise
-  parameter gp_odata_width       = gp_idata_width+gp_coeff_width+gp_decimation_factor+(`DIV(gp_coeff_length,gp_decimation_factor))
+  parameter gp_odata_width       = gp_idata_width+gp_coeff_width+$clog2(gp_decimation_factor)+$clog2(`DIV(gp_coeff_length,gp_decimation_factor))
                                                                          // Set output bit-width
 ) (
   input  wire                                                  i_rst_an, // Asynchronous active low reset
@@ -25,8 +25,8 @@ module mul_add #(
   localparam c_col              = `DIV(gp_coeff_length, gp_decimation_factor);
   localparam c_row_x_col        = gp_decimation_factor * c_col;
   localparam c_mul_out_width    = gp_idata_width       + gp_coeff_width;
-  localparam c_add_out_width    = gp_decimation_factor + c_mul_out_width;
-  localparam c_sum_out_width    = c_add_out_width      + c_col;
+  localparam c_add_out_width    = $clog2(gp_decimation_factor) + c_mul_out_width;
+  localparam c_sum_out_width    = c_add_out_width      + $clog2(c_col);
   localparam c_commutator_width = gp_decimation_factor * gp_idata_width;
   localparam c_msb_filler_width = c_sum_out_width      - c_add_out_width;
   // WIRE DECLARATION
@@ -45,16 +45,7 @@ module mul_add #(
   /***********************/
   /* FILTER COEFFICIENTS */
   /***********************/
-  assign c_coeff[0] = -8'sd2;
-assign c_coeff[1] =  8'sd0;
-assign c_coeff[2] =  8'sd2;
-assign c_coeff[3] =  8'sd5;
-assign c_coeff[4] =  8'sd8;
-assign c_coeff[5] =  8'sd11;
-assign c_coeff[6] =  8'sd14;
-assign c_coeff[7] =  8'sd16;
-assign c_coeff[8] =  8'sd17;
-
+  `include "filt_coeff.v"
 
   /***********************/
   /* CONSTANT MULTIPLIER */
@@ -193,7 +184,7 @@ assign c_coeff[8] =  8'sd17;
           begin: g_dly_line_tf_loop
             if (n==c_col)
               begin: g_sum_tf_col_n               
-                assign w_sum[n*c_sum_out_width-1-:c_sum_out_width]=$signed({{c_msb_filler_width{w_add_tree[(gp_decimation_factor-1)*(n)*c_add_out_width-1]}},w_add_tree[(gp_decimation_factor-1)*(n)*c_add_out_width-1-:c_add_out_width]});
+                assign w_sum[n*c_sum_out_width-1-:c_sum_out_width] = $signed(w_add_tree[(gp_decimation_factor-1)*(n)*c_add_out_width-1-:c_add_out_width]);
               end//IF_UM_TF_COL_0
             else
               begin: g_sum_tf_col_n_0                
@@ -206,7 +197,7 @@ assign c_coeff[8] =  8'sd17;
                   .i_data   (w_sum[(n+1)*c_sum_out_width-1 -: c_sum_out_width]),
                   .o_data   (d_sum[(n)*c_sum_out_width-1 -: c_sum_out_width])
                 );
-		assign w_sum[n*c_sum_out_width-1-:c_sum_out_width] = $signed({{c_msb_filler_width{w_add_tree[(gp_decimation_factor-1)*(n)*c_add_out_width-1]}},w_add_tree[(gp_decimation_factor-1)*(n)*c_add_out_width-1-:c_add_out_width]}) + $signed(d_sum[n*c_sum_out_width-1 -: c_sum_out_width]);
+		assign w_sum[n*c_sum_out_width-1-:c_sum_out_width] = $signed(w_add_tree[(gp_decimation_factor-1)*(n)*c_add_out_width-1-:c_add_out_width]) + $signed(d_sum[n*c_sum_out_width-1 -: c_sum_out_width]);
               end//ELSE_SUM_TF_COL_1_N
           end//FOR_sum_TF_COLs
       end//IF_SUM_TF
@@ -215,7 +206,7 @@ assign c_coeff[8] =  8'sd17;
         for (n=0; n<c_col; n=n+1)
           begin: g_dly_line_df_loop
             if (n == 0)
-              assign w_sum[(n+1)*c_sum_out_width-1-:c_sum_out_width] = $signed(w_add_tree[(gp_decimation_factor-1)*(n+1)*c_add_out_width-1-:c_add_out_width]);// + $signed(w_add_tree[(gp_decimation_factor-1)*(n+2)*c_add_out_width-1-:c_add_out_width]);//nr add=D-1
+              assign w_sum[(n+1)*c_sum_out_width-1-:c_sum_out_width] = $signed(w_add_tree[(gp_decimation_factor-1)*(n+1)*c_add_out_width-1-:c_add_out_width]);
 	    else
 	      assign w_sum[(n+1)*c_sum_out_width-1-:c_sum_out_width] = $signed(w_add_tree[(gp_decimation_factor-1)*(n+1)*c_add_out_width-1-:c_add_out_width]) + $signed(w_sum[n*c_sum_out_width-1-:c_sum_out_width]);
           end
@@ -228,11 +219,11 @@ assign c_coeff[8] =  8'sd17;
   generate
     if (gp_tf_df)
       begin: g_oup_assignment_tf
-      assign o_data = w_sum[c_sum_out_width-1:0];// CCW+TF
+        assign o_data = w_sum[c_sum_out_width-1:0];// CCW+TF
       end
     else
       begin: g_oup_assignment_df
-      assign o_data = w_sum[c_sum_out_width*c_col-1 -: c_sum_out_width];// CCW+DF
+        assign o_data = w_sum[c_sum_out_width*c_col-1 -: c_sum_out_width];// CCW+DF
       end
   endgenerate
   
