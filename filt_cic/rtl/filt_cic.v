@@ -15,19 +15,19 @@ module filt_cic #(
   input  wire                           i_ena,
   input  wire                           i_clk,
   input  wire signed [gp_inp_width-1:0] i_data,
-  output wire signed [gp_oup_width-1:0]  o_data
+  output wire signed [gp_oup_width-1:0] o_data
 );
 // -------------------------------------------------------------------
   // CONSTANT DECLARATION
   localparam c_fill_width = gp_oup_width - gp_inp_width;
   // REGISTER DECLARATION
   wire w_sclk;
-  wire signed [gp_oup_width-1:0]          r_comb_inp;  
-  reg         [gp_decimation_factor-1:0]  r_count;
+  wire signed [gp_oup_width-1         :0] r_comb_inp;  
+  reg         [gp_decimation_factor-1 :0] r_count;
   wire signed [gp_order*gp_oup_width-1:0] r_int_dly;
   wire signed [gp_order*gp_oup_width-1:0] r_comb_dly;
   // WIRE DECLARATION
-  wire signed [gp_oup_width-1:0]          w_data;
+  wire signed [gp_oup_width-1         :0] w_data;
   wire signed [gp_order*gp_oup_width-1:0] w_int_add;
   wire signed [gp_order*gp_oup_width-1:0] w_comb_diff;
 // -------------------------------------------------------------------   

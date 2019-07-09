@@ -9,7 +9,7 @@ module filt_fir #(
   parameter gp_coeff_width       = 8,
   parameter gp_tf_df             = 1,                              // 1-> TF, 0-> DF   
   parameter gp_symm              = 1,
-  parameter gp_oup_width         = gp_data_width+gp_coeff_width+gp_coeff_length
+  parameter gp_oup_width         = gp_data_width+gp_coeff_width+$clog2(gp_coeff_length)
 ) (
   input  wire                            i_rst_an,
   input  wire                            i_ena,
@@ -19,14 +19,12 @@ module filt_fir #(
 );
 // -------------------------------------------------------------------
   localparam c_mul_oup_width = gp_data_width   + gp_coeff_width;
-  localparam c_add_oup_width = c_mul_oup_width + gp_coeff_length;
+  localparam c_add_oup_width = c_mul_oup_width + $clog2(gp_coeff_length);
   localparam c_filler_length = c_add_oup_width - c_mul_oup_width;
-  localparam c_coeff_2       = `DIV(gp_coeff_length, 2);
+  localparam c_coeff_2       = (gp_symm) ? `DIV(gp_coeff_length, 2) : gp_coeff_length;
   
   wire signed [gp_coeff_length*c_mul_oup_width-1:0]     w_mul;
-  wire signed [gp_coeff_length*c_add_oup_width-1:0]     w_add;
-  wire signed [(gp_coeff_length-1)*c_add_oup_width-1:0] r_dly_tf;
-  wire signed [gp_coeff_length*gp_data_width-1:0]       r_dly_df;  
+  wire signed [gp_coeff_length*c_add_oup_width-1:0]     w_add; 
   wire signed [gp_coeff_width-1:0]                      c_coeff [0:c_coeff_2-1];
 // -------------------------------------------------------------------  
   genvar i;
@@ -39,6 +37,7 @@ module filt_fir #(
     /******************************/    
     if (gp_tf_df)
       begin:g_fir_tf
+        wire signed [(gp_coeff_length-1)*c_add_oup_width-1:0] r_dly_tf;
         for (i=0; i<gp_coeff_length; i=i+1)
 	  begin: g_fir
 	    if (gp_symm)
@@ -59,11 +58,11 @@ module filt_fir #(
 	      
 	    if (i==gp_coeff_length-1)
 	      begin: g_fir_add_last
-                assign w_add[(i+1)*c_add_oup_width-1 -: c_add_oup_width] = $signed({{c_filler_length{w_mul[(i+1)*c_mul_oup_width-1]}},w_mul[(i+1)*c_mul_oup_width-1 -: c_mul_oup_width]});  
+                assign w_add[(i+1)*c_add_oup_width-1 -: c_add_oup_width] = $signed(w_mul[(i+1)*c_mul_oup_width-1 -: c_mul_oup_width]);  
 	      end
             else
 	      begin: g_fir_add
-                assign w_add[(i+1)*c_add_oup_width-1 -: c_add_oup_width] = $signed({{c_filler_length{w_mul[(i+1)*c_mul_oup_width-1]}},w_mul[(i+1)*c_mul_oup_width-1 -: c_mul_oup_width]}) + $signed(r_dly_tf[(i+1)*c_add_oup_width-1 -: c_add_oup_width]);
+                assign w_add[(i+1)*c_add_oup_width-1 -: c_add_oup_width] = $signed(w_mul[(i+1)*c_mul_oup_width-1 -: c_mul_oup_width]) + $signed(r_dly_tf[(i+1)*c_add_oup_width-1 -: c_add_oup_width]);
               end
 	      
 	    if (i>0)
@@ -85,6 +84,7 @@ module filt_fir #(
     /**************************/
     else
       begin: g_fir_df
+        wire signed [gp_coeff_length*gp_data_width-1:0]       r_dly_df;
 	if (gp_symm)
 	  begin: g_fir_symm
 	    for (i=0; i<gp_coeff_length; i=i+1)
@@ -111,11 +111,11 @@ module filt_fir #(
 	  begin: g_add    
 	    if (i==0)
 	      begin: g_fir_add_first
-	        assign w_add[(i+1)*c_add_oup_width-1 -: c_add_oup_width] = $signed({{c_filler_length{w_mul[(i+1)*c_mul_oup_width-1]}},w_mul[(i+1)*c_mul_oup_width-1 -: c_mul_oup_width]});
+	        assign w_add[(i+1)*c_add_oup_width-1 -: c_add_oup_width] = $signed(w_mul[(i+1)*c_mul_oup_width-1 -: c_mul_oup_width]);
 	      end
 	    else
 	      begin: g_fir_add
-	        assign w_add[(i+1)*c_add_oup_width-1 -: c_add_oup_width] = $signed({{c_filler_length{w_mul[(i+1)*c_mul_oup_width-1]}},w_mul[(i+1)*c_mul_oup_width-1 -: c_mul_oup_width]}) + w_add[i*c_add_oup_width-1 -: c_add_oup_width];
+	        assign w_add[(i+1)*c_add_oup_width-1 -: c_add_oup_width] = $signed(w_mul[(i+1)*c_mul_oup_width-1 -: c_mul_oup_width]) + $signed(w_add[i*c_add_oup_width-1 -: c_add_oup_width]);
 	      end
 	  end//FOR
 	

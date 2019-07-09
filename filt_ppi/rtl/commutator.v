@@ -6,8 +6,7 @@
 module commutator #(
   parameter gp_ccw                  = 1,                                     // Select: Counter Clock Wise | Clock Wise
   parameter gp_idata_width          = 26,                                    // Set input data width
-  parameter gp_interpolation_factor = 32,                                    // Set number of output channels
-  parameter gp_phase                = 0                                      // Select upsample phase: 0:gp_interpolation_factor-1
+  parameter gp_interpolation_factor = 32                                    // Set number of output channels
   )                              
 (
   input  wire                                                     i_rst_an,  // Asynchronous active low reset
@@ -25,11 +24,9 @@ module commutator #(
   reg         [c_cnt_width-1:0]                            r_ring_cnt;
   reg         [c_idx_width-1:0]                            r_idx;
   reg                                                      r_done;    
-  // WIRE DECLARATION    
-  wire signed [gp_interpolation_factor*gp_idata_width-1:0] d_data;
+  // WIRE DECLARATION
   wire signed [gp_interpolation_factor*gp_idata_width-1:0] w_data;
   wire                                                     w_done;
-  wire                                                     w_ena;
   genvar x;
 // -------------------------------------------------------------------  
   generate
@@ -49,7 +46,6 @@ module commutator #(
               end
             else if (i_ena)
               begin
-                if (w_ena) begin
 		if (r_ring_cnt == 'd0)
                   begin
                     r_ring_cnt[c_cnt_width-1] <= 1'b1;
@@ -66,29 +62,8 @@ module commutator #(
 		  r_idx <= 'd0;		  
 		
 		r_done <= w_done;
-		end
               end
           end//ALWAYS
-	  
-	if (gp_phase==0)
-	  begin: SR_PHASE_EQ_0
-	    assign d_data = i_data;
-	    assign w_ena  = 1'b1;
-	  end
-	else	  
-	  begin: g_phase_alignment
-            shift_register #(
-	      .gp_data_width (gp_interpolation_factor*gp_idata_width),
-	      .gp_nr_stages  (gp_phase)
-	    ) SR_PHASE_LT_0 (
-	      .i_rst_an     (i_rst_an),
-	      .i_ena        (i_ena),  
-	      .i_clk        (i_clk),  
-	      .i_data       (i_data), 
-	      .o_data       (d_data),
-	      .o_shift_done (w_ena)  
-	    );
-	  end
 	  	  	            
 	// Capture input data in clock-wise order MSB->LSB
         for (x=gp_interpolation_factor; x>0; x=x-1)
@@ -99,7 +74,7 @@ module commutator #(
               .i_rst_an (i_rst_an),
               .i_ena    (i_ena),
               .i_clk    (r_ring_cnt[x-1]),
-              .i_data   (d_data[x*gp_idata_width-1 -: gp_idata_width]),
+              .i_data   (i_data[x*gp_idata_width-1 -: gp_idata_width]),
               .o_data   (w_data[x*gp_idata_width-1 -: gp_idata_width])
             );	    
           end
@@ -123,7 +98,6 @@ module commutator #(
               end
             else if (i_ena)
               begin
-	      if (w_ena) begin
                 if (r_ring_cnt == 'd0)
                   begin
                     r_ring_cnt[0] <= 1'b1;
@@ -141,28 +115,7 @@ module commutator #(
 		
 		r_done     <= w_done;
               end
-	      end
           end//ALWAYS 
-
-	if (gp_phase==0)
-	  begin: SR_PHASE_EQ_0
-	    assign d_data = i_data;
-	    assign w_ena  = 1'b1;
-	  end
-	else	  
-	  begin: g_phase_alignment
-            shift_register #(
-	      .gp_data_width (gp_interpolation_factor*gp_idata_width),
-	      .gp_nr_stages  (gp_phase)
-	    ) SR_PHASE_LT_0 (
-	      .i_rst_an     (i_rst_an),
-	      .i_ena        (i_ena),  
-	      .i_clk        (i_clk),  
-	      .i_data       (i_data), 
-	      .o_data       (d_data),
-	      .o_shift_done (w_ena)  
-	    );
-	  end
 	    
         for (x=0; x<gp_interpolation_factor; x=x+1)
           begin: g_reg_comm_inp
@@ -171,8 +124,8 @@ module commutator #(
               ) REG_COMMUTATOR_INP_DATA  (
               .i_rst_an (i_rst_an),
               .i_ena    (i_ena),
-              .i_clk    (~r_ring_cnt[x]),
-              .i_data   (d_data[(x+1)*gp_idata_width-1:x*gp_idata_width]),
+              .i_clk    (r_ring_cnt[x]),
+              .i_data   (i_data[(x+1)*gp_idata_width-1:x*gp_idata_width]),
               .o_data   (w_data[(x+1)*gp_idata_width-1:x*gp_idata_width])
             );
           end

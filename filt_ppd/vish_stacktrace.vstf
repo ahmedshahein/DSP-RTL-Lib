@@ -1,0 +1,70 @@
+# Current time Fri Jul  5 11:36:46 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Fri Jul  5 11:36:46 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Fri Jul  5 11:36:46 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Fri Jul  5 11:36:46 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0x092e536b: '<unknown (@0x92e536b)>'
+# 3    0xfffffffb: '<unknown (@0xfffffffb)>'
+# End of Stack Trace
+
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0xfffffffb: '<unknown (@0xfffffffb)>'
+# End of Stack Trace
+
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0x00001ffb: '<unknown (@0x1ffb)>'
+# End of Stack Trace
+
+# Current time Fri Jul  5 11:36:46 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Fri Jul  5 11:36:46 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0x091feb1b: '<unknown (@0x91feb1b)>'
+# 2    0x33fffffb: '<unknown (@0x33fffffb)>'
+# 3    0xf5f7400b: '<unknown (@0xf5f7400b)>'
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0xfffffffb: '<unknown (@0xfffffffb)>'
+# End of Stack Trace
+

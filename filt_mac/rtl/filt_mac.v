@@ -20,6 +20,7 @@ module filt_mac #(
 // -------------------------------------------------------------------
   // CONSTANT DECLARATION
   localparam c_coeff_size    = (gp_symm) ? ((gp_coeff_length/2)+(gp_coeff_length%2)) : gp_coeff_length;
+  localparam c_even_odd_symm = (gp_symm && ((gp_coeff_length%2)==0) ) ? 1'b1 : 1'b0;
   localparam c_count_width   = $clog2(c_coeff_size);
   localparam c_mul_oup_width = gp_data_width   + gp_coeff_width;
   localparam c_add_oup_width = c_mul_oup_width + gp_coeff_length;
@@ -45,7 +46,7 @@ module filt_mac #(
       if (!i_rst_an)
         begin
 	  for (i=0; i<gp_coeff_length; i=i+1)
-	    r_delay_line[i] <= 'd0;
+	    r_delay_line[i] <= 'sd0;
 	end
       else if (i_ena)
         begin
@@ -76,19 +77,19 @@ module filt_mac #(
   generate
     if (gp_symm)
       begin: g_symm_inp_a
-        assign w_mul_inp_a = (r_count_coeff==c_coeff_size-1) ? // MIDDLE TAP
+        assign w_mul_inp_a = ( !c_even_odd_symm && (r_count_coeff==c_coeff_size-1) ) ? // MIDDLE TAP
 					                       r_delay_line[r_count_coeff] 
 							     : // MIRRORED TAPS
 							       ($signed(r_delay_line[r_count_coeff]) +  $signed(r_delay_line[gp_coeff_length-1-r_count_coeff]));
       end
     else
       begin: g_asymm_inp_a
-        assign w_mul_inp_a = (r_count_coeff<c_coeff_size) ? r_delay_line[r_count_coeff] : 'd0;
+        assign w_mul_inp_a = (r_count_coeff<c_coeff_size) ? $signed(r_delay_line[r_count_coeff]) : 'sd0;
       end
   endgenerate
   
   // MULTIPLIER INP B
-  assign w_mul_inp_b = (r_count_coeff<c_coeff_size) ? c_coeff[r_count_coeff]      : 'd0;
+  assign w_mul_inp_b = (r_count_coeff<c_coeff_size) ? $signed(c_coeff[r_count_coeff])      : 'sd0;
   
   // SIGNED MULTIPLIER
   assign w_mul_oup   = $signed(w_mul_inp_a) * $signed(w_mul_inp_b);

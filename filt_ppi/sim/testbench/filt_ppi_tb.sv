@@ -7,19 +7,20 @@
 `include "defines.sv"
 // -------------------------------------------------------------------
 module filt_ppi_tb;
-  time CLK_PERIOD = 400;
+  time CLK_PERIOD = 1000;
   time F_CLK_PERIOD = CLK_PERIOD/`P_INTERPOLATION;
   
   reg       i_rst_an;
   reg       i_ena=1'b0;
   reg       i_clk;
+  reg       i_fclk;
   reg       f_clk=1'b0;
   reg       s_clk;
   int       r_cnt=`P_INTERPOLATION;
   reg [1:0] r_start_chk='d0;
   integer   error_count=0;
   
-  reg                             data_ready;
+  reg                             data_ready=1'b0;
   reg  signed [`P_INP_DATA_W-1:0] i_data;
   wire signed [`P_OUP_W-1:0]      o_data_rtl;
   // READ-IN MATLAB STIMULI FILE  
@@ -32,7 +33,7 @@ module filt_ppi_tb;
   integer                         status_mat_oup;
   reg  signed [`P_OUP_W-1:0]      r_data_mat;
   reg  signed [`P_OUP_W-1:0]      sr_data_mat [0:`P_INTERPOLATION];
-  wire signed [`P_OUP_W-1:0]      o_data_mat;
+  reg  signed [`P_OUP_W-1:0]      o_data_mat;
 // -------------------------------------------------------------------    
   initial
     begin: RST
@@ -55,11 +56,22 @@ module filt_ppi_tb;
         r_cnt <= r_cnt + 1;
       else
         r_cnt <= 'd0;
-	
-      i_clk <= s_clk;
     end
   assign s_clk = (r_cnt<`P_INTERPOLATION/2) ? 1'b1 : 1'b0;   
 
+  /*always 
+    begin
+    i_fclk = #2 f_clk;i_clk = s_clk;
+    end*/
+ 
+ initial begin
+    fork
+        forever #2 i_fclk = f_clk;
+        forever #2 i_clk = s_clk;
+    join 
+ end
+
+    
   always @(posedge i_clk)
     begin: FLAG_START_CHK
       if (r_start_chk < 3)
@@ -107,15 +119,11 @@ module filt_ppi_tb;
       end
     end
   
-  always @(posedge f_clk)
+  always @(posedge i_fclk)
     begin: MATLAB_RESPONSE
       if (i_rst_an && i_ena)
-        status_mat_oup = $fscanf(fid_mat_oup,"%d\n", r_data_mat);
-	
-      sr_data_mat[0] <= r_data_mat;
-      sr_data_mat[1:`P_INTERPOLATION] <= sr_data_mat[0:`P_INTERPOLATION-1];
+        status_mat_oup = $fscanf(fid_mat_oup,"%d\n", o_data_mat);
     end
-  assign o_data_mat =  sr_data_mat[`P_INTERPOLATION];
  
   filt_ppi #(
     .gp_idata_width          (`P_INP_DATA_W   ),  
@@ -132,7 +140,7 @@ module filt_ppi_tb;
     .i_ena    (i_ena     ),
     .i_clk    (i_clk     ),
     .i_data   (i_data    ),
-    .i_fclk   (f_clk     ),
+    .i_fclk   (i_fclk     ),
     .o_data   (o_data_rtl),
     .o_sclk   (          )
   );

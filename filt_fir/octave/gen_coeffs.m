@@ -1,8 +1,14 @@
-function gen_coeffs(b, q)
+function gen_coeffs(b, q, symm)
   
 FID = fopen("filt_coeff.v", "w");
 
-for i = 1 : ceil(length(b)/2),
+if (symm==1)
+  filt_len = ceil(length(b)/2);
+else
+  filt_len = length(b);
+endif
+
+for i = 1 : filt_len,
   if b(i) < 0,
     fprintf(FID, "assign c_coeff[%d] = -%d'sd%d;\n", i-1, q, abs(b(i)));
   else  

@@ -1,8 +1,8 @@
-`define P_INP_DATA_W 	8
-`define P_COEFF_L 	33
-`define P_COEFF_W 	12
-`define P_SYMM 		1
-`define P_OUP_DATA_W 	53
+`define P_INP_DATA_W 	2
+`define P_COEFF_L 	32
+`define P_COEFF_W 	16
+`define P_SYMM 		0
+`define P_OUP_DATA_W 	50
 
 `define TESTCASE	6
 

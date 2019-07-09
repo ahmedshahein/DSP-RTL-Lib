@@ -2,30 +2,17 @@
   clear
   clc  
 
-%PASSED  
-%p_comm_ccw          = 0;
-%p_mul_ccw           = 0;
-%p_decimation_factor-1-p_comm_phase
-
-%PASSED
-%p_comm_ccw          = 1;
-%p_mul_ccw           = 0;  
-%p_decimation_factor-1-p_comm_phase
-
   nr_samples = 2^10;
   
-  gp_coeff_length      = 33;
-  gp_coeff_width       = 12;
-  gp_data_width        = 8;
-  gp_symm              = 1;
-  
-  %b = [5,10,15,20,25,30,25,20,15,10,5];
-  %b = [0,-2,6,-17,37,-64,95,-119,127,-119,95,-64,37,-17,6,-2,0];
-  
+  gp_coeff_length      = 32;
+  gp_coeff_width       = 16;
+  gp_data_width        = 2;
+  gp_symm              = 0;
+   
   fs  = 1000;
-  f   = [0 50 220 fs]/fs;
+  f   = [0 50 110 fs]/fs;
   b   = remez(gp_coeff_length-1, f, [1 1 0 0], [1 1]);
-  q_b = quantize(b, gp_coeff_width, "midtread");
+  q_b = quantize(b, gp_coeff_width, "midtread", "signed");
   b   = round( (2^(gp_coeff_width-1)-1) * q_b);
   
   for i = 1 : 9,
@@ -55,7 +42,7 @@
       f2 = fs/2;
       t = 1:1/fs:5;
       data = chirp (t, f1, 5, f2, "logarithmic");
-      q_data = quantize(data, gp_data_width, "midtread");
+      q_data = quantize(data, gp_data_width, "midtread", "signed");
       data = round( 2^(gp_data_width-1) * q_data );
       
     case {6}
@@ -90,7 +77,7 @@
       r_max =  1;
       An = 0.2;
       r     = An * ( r_min + (r_max - r_min)*rand(1, length(data)) );
-      q_data = quantize(data+r, gp_data_width, "midtread");
+      q_data = quantize(data+r, gp_data_width, "midtread", "signed");
       data = round( 2^(gp_data_width-1) * q_data );      
       data(data==2^(gp_data_width-1)) = 2^(gp_data_width-1)-1;
 
@@ -109,7 +96,7 @@
       r_max =  1;
       An = 0.25;
       r     = An * ( r_min + (r_max - r_min)*rand(1, length(data)) );
-      q_data = quantize(data+r, gp_data_width, "midtread");
+      q_data = quantize(data+r, gp_data_width, "midtread", "signed");
       data = round( 2^(gp_data_width-1) * q_data );      
       data(data==2^(gp_data_width-1)) = 2^(gp_data_width-1)-1;
       

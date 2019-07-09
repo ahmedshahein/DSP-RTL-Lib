@@ -2,15 +2,18 @@
   clear
   clc  
 
-  nr_samples = 2^10;
+  nr_samples = 2^12;
   
-  gp_decimation_factor  = 32;
-  gp_order              = 5;
+  gp_decimation_factor  = 17;
+  gp_order              = 8;
   gp_diff_delay         = 1;
-  gp_phase              = 0;
-  gp_inp_width          = 8;
-  gp_oup_width          = gp_inp_width + gp_order*floor(log2(gp_decimation_factor*gp_diff_delay));
+  gp_phase              = 3;
+  gp_inp_width          = 2;
+  gp_oup_width          = gp_inp_width + gp_order*ceil(log2(gp_decimation_factor*gp_diff_delay));
   
+  %G = % 0.5->1
+  BG = gp_order * ceil(log2(gp_decimation_factor*gp_diff_delay)) + gp_inp_width
+  SF = 2^(gp_order*ceil(log2(gp_decimation_factor*gp_diff_delay)))/((gp_decimation_factor*gp_diff_delay)^gp_order) %[1; 2)
   for i = 1 : 9,
     testcase = i;
     printf("### INFO: Running test-case %d\n", testcase);
@@ -44,7 +47,7 @@
       f2 = fs/2;
       t = 1:1/fs:5;
       data = chirp (t, f1, 5, f2, "logarithmic");
-      q_data = quantize(data, gp_inp_width, "midtread");
+      q_data = quantize(data, gp_inp_width, "midtread", "signed");
       data = round( 2^(gp_inp_width-1) * q_data );
       %data(data==2^(gp_inp_width-1)) = 2^(gp_inp_width-1)-1;
       
@@ -80,7 +83,7 @@
       r_max =  1;
       An = 0.2;
       r     = An * ( r_min + (r_max - r_min)*rand(1, length(data)) );
-      q_data = quantize(data+r, gp_inp_width, "midtread");
+      q_data = quantize(data+r, gp_inp_width, "midtread", "signed");
       data = round( 2^(gp_inp_width-1) * q_data );      
       data(data==2^(gp_inp_width-1)) = 2^(gp_inp_width-1)-1;
 
@@ -99,7 +102,7 @@
       r_max =  1;
       An = 0.25;
       r     = An * ( r_min + (r_max - r_min)*rand(1, length(data)) );
-      q_data = quantize(data+r, gp_inp_width, "midtread");
+      q_data = quantize(data+r, gp_inp_width, "midtread", "signed");
       data = round( 2^(gp_inp_width-1) * q_data );      
       data(data==2^(gp_inp_width-1)) = 2^(gp_inp_width-1)-1;
       
@@ -117,8 +120,16 @@
   gen_defines(defines);
   %% RESPONSE GENERATION
   octave_data=data;
-  f = cicdesign(gp_decimation_factor, gp_order, gp_diff_delay);
-  yy = cicfilter(f, octave_data, gp_phase);
+%  f = cicdesign(gp_decimation_factor, gp_order, gp_diff_delay);
+%  yy = cicfilter(f, octave_data, gp_phase);
+  
+  [yy Hcic] = CICFilter(gp_diff_delay, gp_order, gp_decimation_factor, gp_phase, 1, octave_data);
+%  if (yy == FilteredData)
+%    disp("###INFO: PASSED");
+%  else
+%    disp("### INFO: FAILED");
+%  end
+  
   disp("### INFO: Generating response files.");
   filename_oup = strcat("response_tc_",num2str(testcase,"%d"),"_mat.dat");
   dlmwrite(filename_oup,yy,"\n");

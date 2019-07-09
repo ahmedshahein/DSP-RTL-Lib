@@ -1,0 +1,100 @@
+# Current time Sun Jul  7 22:29:27 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0x0000000c: '<unknown (@0xc)>'
+# Current time Mon Jul  8 11:35:50 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0x0840eeea: 'Tk_MainEx + 0x1da' in '/home/shahein/intelFPGA_pro/18.0/modelsim_ase/linuxaloem/vish'
+# 3    0xffffcd65: '<unknown (@0xffffcd65)>'
+# 4    0x2f6c636f: '<unknown (@0x2f6c636f)>'
+# Current time Tue Jul  9 12:12:50 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Tue Jul  9 12:12:50 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Tue Jul  9 12:12:50 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Tue Jul  9 12:12:50 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Tue Jul  9 12:12:50 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# Current time Tue Jul  9 12:12:50 2019
+# ModelSim - Intel FPGA Edition Stack Trace
+# Program = vish
+# Id = "10.6c"
+# Version = "2017.07"
+# Date = "Jul 26 2017"
+# Platform = linuxpe
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0x00003283: '<unknown (@0x3283)>'
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 2    0x00003283: '<unknown (@0x3283)>'
+# 3    0x00000005: '<unknown (@0x5)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 3    0x00000005: '<unknown (@0x5)>'
+# 2    0x7261744e: '<unknown (@0x7261744e)>'
+# 2    0x00003283: '<unknown (@0x3283)>'
+# 3    0x00000005: '<unknown (@0x5)>'
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0x092f74b3: '<unknown (@0x92f74b3)>'
+# End of Stack Trace
+
+# transcript error: error writing "stdout": I/O error
+    while executing
+"puts -nonewline stdout $s"
+# transcript error: error writing "stdout": I/O error
+    while executing
+"puts -nonewline stdout $s"
+# transcript error: error writing "stdout": I/O error
+    while executing
+"puts -nonewline stdout $s"
+# 0    0xf7fd5059: '<unknown (@0xf7fd5059)>'
+# 1    0xf7fd507b: '<unknown (@0xf7fd507b)>'
+# 2    0x00003283: '<unknown (@0x3283)>'
+# 3    0x00000005: '<unknown (@0x5)>'
+# transcript error: error writing "stdout": I/O error
+    while executing
+"puts -nonewline stdout $s"

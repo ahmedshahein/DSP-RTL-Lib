@@ -7,7 +7,7 @@ function gen_defines(defines)
   fprintf(fid, "`define P_COEFF_W \t%d\n",defines.p_coeff_width);
   fprintf(fid, "`define P_TF_DF \t%d\n",defines.p_tf_df);
   fprintf(fid, "`define P_SYMM \t\t%d\n",defines.p_symm);
-  fprintf(fid, "`define P_OUP_DATA_W \t%d\n",defines.p_data_width+defines.p_coeff_width+defines.p_coeff_length);
+  fprintf(fid, "`define P_OUP_DATA_W \t%d\n",defines.p_data_width+defines.p_coeff_width+ceil(log2(defines.p_coeff_length)));
   fprintf(fid, "\n");
   fprintf(fid, "`define TESTCASE\t%d\n",defines.testcase);
   fprintf(fid, "\n");

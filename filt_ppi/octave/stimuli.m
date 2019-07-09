@@ -4,14 +4,14 @@
 
   nr_samples = 2^10;
   
-  p_interpolation_factor = 23;
+  p_interpolation_factor = 64;
   p_data_width        = 8;
   p_comm_ccw          = 1;
   p_mul_ccw           = 1;
   p_tf_df             = 1;
   p_coeff_length      = 71;
   p_coeff_width       = 16; 
-  p_comm_phase        = 0
+  p_comm_phase        = 32;
   
   fs  = 1000;
   f   = [0 50 220 fs]/fs;

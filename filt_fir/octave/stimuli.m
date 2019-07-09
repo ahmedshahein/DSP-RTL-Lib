@@ -2,31 +2,18 @@
   clear
   clc  
 
-%PASSED  
-%p_comm_ccw          = 0;
-%p_mul_ccw           = 0;
-%p_decimation_factor-1-p_comm_phase
-
-%PASSED
-%p_comm_ccw          = 1;
-%p_mul_ccw           = 0;  
-%p_decimation_factor-1-p_comm_phase
-
-  nr_samples = 2^10;
+  nr_samples = 2^12;
   
-  p_coeff_length      = 33;
-  p_coeff_width       = 12;
-  p_data_width        = 8;
-  p_tf_df             = 1;
+  p_coeff_length      = 64;
+  p_coeff_width       = 13;
+  p_data_width        = 7;
+  p_tf_df             = 0;
   p_symm              = 1;
   
-  %b = [5,10,15,20,25,30,25,20,15,10,5];
-  %b = [0,-2,6,-17,37,-64,95,-119,127,-119,95,-64,37,-17,6,-2,0];
-  
   fs  = 1000;
-  f   = [0 50 220 fs]/fs;
+  f   = [0 50 87 fs]/fs;
   b   = remez(p_coeff_length-1, f, [1 1 0 0], [1 1]);
-  q_b = quantize(b, p_coeff_width, "midtread");
+  q_b = quantize(b, p_coeff_width, "midtread", "signed");
   b   = round( (2^(p_coeff_width-1)-1) * q_b);
   
   for i = 1 : 9,
@@ -62,9 +49,8 @@
       f2 = fs/2;
       t = 1:1/fs:5;
       data = chirp (t, f1, 5, f2, "logarithmic");
-      q_data = quantize(data, p_data_width, "midtread");
+      q_data = quantize(data, p_data_width, "midtread", "signed");
       data = round( 2^(p_data_width-1) * q_data );
-      %data(data==2^(p_data_width-1)) = 2^(p_data_width-1)-1;
       
     case {6}
       rand ("state", 42);
@@ -98,12 +84,12 @@
       r_max =  1;
       An = 0.2;
       r     = An * ( r_min + (r_max - r_min)*rand(1, length(data)) );
-      q_data = quantize(data+r, p_data_width, "midtread");
+      q_data = quantize(data+r, p_data_width, "midtread", "signed");
       data = round( 2^(p_data_width-1) * q_data );      
       data(data==2^(p_data_width-1)) = 2^(p_data_width-1)-1;
 
     case {9}
-      %nr_samples = 2^12;
+      nr_samples = 2^12;
       fs    = 1e3;
       fo    = 173.38943;
       A     = 1;
@@ -117,7 +103,7 @@
       r_max =  1;
       An = 0.25;
       r     = An * ( r_min + (r_max - r_min)*rand(1, length(data)) );
-      q_data = quantize(data+r, p_data_width, "midtread");
+      q_data = quantize(data+r, p_data_width, "midtread", "signed");
       data = round( 2^(p_data_width-1) * q_data );      
       data(data==2^(p_data_width-1)) = 2^(p_data_width-1)-1;
       
@@ -133,7 +119,7 @@
   defines.testcase            = testcase;
   gen_defines(defines);
   %% COEFFICIENT GENERATION
-  gen_coeffs(b,p_coeff_width);
+  gen_coeffs(b,p_coeff_width, p_symm);
   %% RESPONSE GENERATION
   octave_data=data;
   yy= filter(b,1,octave_data);

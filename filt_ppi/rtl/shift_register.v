@@ -61,14 +61,16 @@ module shift_register #(
     begin: p_count_done
       if (!i_rst_an)
         begin
-	  r_cnt        <= 'd0;
+	  r_cnt        <= {c_cnt_width{1'b1}};
 	  r_shift_done <= 1'b0;
 	end
       else if (i_ena)
         begin
 	  if (r_cnt<gp_nr_stages)
 	    r_cnt <= r_cnt + 1'b1;
-	    
+	  else
+	      r_cnt <= 'd0;
+	      
 	  if (w_shift_done)
 	    r_shift_done <= 1'b1;	    
 	end

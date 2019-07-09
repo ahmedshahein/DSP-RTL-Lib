@@ -25,6 +25,7 @@ module filt_ppi #(
 );
 // -------------------------------------------------------------------
 wire [gp_interpolation_factor*gp_odata_width-1:0] mul_add_2_comm;
+wire [gp_odata_width-1                        :0] w_data;
 // -------------------------------------------------------------------
 
   mul_add #(
@@ -46,15 +47,35 @@ wire [gp_interpolation_factor*gp_odata_width-1:0] mul_add_2_comm;
   commutator #(
     .gp_ccw                  (1'b1),
     .gp_idata_width          (gp_odata_width),
-    .gp_interpolation_factor (gp_interpolation_factor),
-    .gp_phase                ('d0)
+    .gp_interpolation_factor (gp_interpolation_factor)
   ) ppi_commutator (
     .i_rst_an (i_rst_an),  
     .i_ena    (i_ena),     
     .i_clk    (i_fclk),  
     .i_data   (mul_add_2_comm),    
-    .o_data   (o_data),    
+    .o_data   (w_data),    
     .o_clk    (o_sclk)
   );
-  
+
+  generate
+    if (gp_comm_phase==0)
+      begin: SR_PHASE_EQ_0
+	assign d_data = i_data;
+      end
+    else	  
+      begin: g_phase_alignment
+        shift_register #(
+	  .gp_data_width (gp_odata_width),
+	  .gp_nr_stages  (gp_comm_phase)
+	) SR_PHASE_LT_0 (
+	  .i_rst_an     (i_rst_an),
+	  .i_ena        (i_ena),  
+	  .i_clk        (i_fclk),  
+	  .i_data       (w_data), 
+	  .o_data       (o_data),
+	  .o_shift_done ()  
+	);
+      end
+  endgenerate
+	       
 endmodule
