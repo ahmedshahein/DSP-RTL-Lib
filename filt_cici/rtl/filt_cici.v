@@ -5,11 +5,11 @@
 // -------------------------------------------------------------------
 module filt_cici #(
   parameter gp_interpolation_factor = 4,
-  parameter gp_order             = 3,
-  parameter gp_diff_delay        = 1,
-  parameter gp_phase             = 0,
-  parameter gp_inp_width         = 8,
-  parameter gp_oup_width         = gp_inp_width + gp_order*$clog2(gp_interpolation_factor*gp_diff_delay)
+  parameter gp_order                = 3,
+  parameter gp_diff_delay           = 1,
+  parameter gp_phase                = 0,
+  parameter gp_inp_width            = 8,
+  parameter gp_oup_width            = gp_inp_width + gp_order*$clog2(gp_interpolation_factor*gp_diff_delay)
 ) (
   input  wire                           i_rst_an,
   input  wire                           i_ena,

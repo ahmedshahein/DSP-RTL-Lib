@@ -58,16 +58,11 @@ module filt_ppi_tb;
         r_cnt <= 'd0;
     end
   assign s_clk = (r_cnt<`P_INTERPOLATION/2) ? 1'b1 : 1'b0;   
-
-  /*always 
-    begin
-    i_fclk = #2 f_clk;i_clk = s_clk;
-    end*/
  
  initial begin
     fork
         forever #2 i_fclk = f_clk;
-        forever #2 i_clk = s_clk;
+        forever #2 i_clk  = s_clk;
     join 
  end
 

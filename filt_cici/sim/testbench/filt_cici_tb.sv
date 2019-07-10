@@ -19,7 +19,7 @@ module filt_cici_tb;
   reg [`P_INP_DATA_W-1:0] i_data;
   wire                 rdy;
   wire signed [`P_OUP_DATA_W-1:0] oup_data;
-  reg                             data_ready;
+  reg                             data_ready=1'b0;
    integer error_count=0;
   // READ-IN MATLAB STIMULI FILE  
   reg [8*64:1]                    filename_mat_inp;
@@ -29,7 +29,7 @@ module filt_cici_tb;
   reg [8*64:1]                    filename_mat_oup;
   integer                         fid_mat_oup;
   integer                         status_mat_oup;
-  reg signed [`P_OUP_DATA_W-1:0]       o_data_mat;
+  reg signed [`P_OUP_DATA_W-1:0]  o_data_mat;
 // -------------------------------------------------------------------    
   initial
     begin: RST
@@ -38,30 +38,29 @@ module filt_cici_tb;
       #(0.5*CLK_PERIOD) i_rst_an = 1'b1;
     end
 
-  always @(posedge i_clk) 
+  always @(posedge s_clk) 
     begin: EGU
       if (i_rst_an)
       i_ena = 1'b1;
     end
   
-  //initial i_clk = 1'b0;
-  always
-    begin
-      f_clk = #(F_CLK_PERIOD/2) ~f_clk;
-    end
-
+  always f_clk = #(F_CLK_PERIOD/2) ~f_clk;
+  
   always @(posedge f_clk)
     begin: SCLK
       if (r_cnt<`P_INTERPOLATION-1)
         r_cnt <= r_cnt + 1;
       else
         r_cnt <= 'd0;
-	
-      i_clk <= s_clk;
     end
   assign s_clk = (r_cnt<`P_INTERPOLATION/2) ? 1'b1 : 1'b0;   
-//always i_clk = #2 s_clk;
-always i_fclk = #2 f_clk;
+ 
+ initial begin
+    fork
+        forever #2 i_fclk = f_clk;
+        forever #2 i_clk = s_clk;
+    join 
+ end
 
   initial
     begin: TEXTIO_READ_IN
@@ -122,16 +121,16 @@ always i_fclk = #2 f_clk;
       
   filt_cici #(
     .gp_interpolation_factor (`P_INTERPOLATION),  
-    .gp_order		  (`P_ORDER),
-    .gp_diff_delay	  (`P_DIFF_DELAY),
-    .gp_phase		  (`P_PHASE),
-    .gp_inp_width	  (`P_INP_DATA_W),
-    .gp_oup_width	  ()
+    .gp_order		     (`P_ORDER),
+    .gp_diff_delay	     (`P_DIFF_DELAY),
+    .gp_phase		     (`P_PHASE),
+    .gp_inp_width	     (`P_INP_DATA_W),
+    .gp_oup_width	     (`P_OUP_DATA_W)
   ) dut (
     .i_rst_an (i_rst_an),
     .i_ena    (i_ena),
     .i_clk    (i_clk),
-    .i_fclk   (f_clk),
+    .i_fclk   (i_fclk),
     .i_data   (i_data),
     .o_data   (oup_data)
   );

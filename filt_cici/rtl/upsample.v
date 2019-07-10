@@ -96,7 +96,7 @@ module upsample #(
     begin: p_count_done
       if (!i_rst_an)
         begin
-	  r_cnt        <= 'd0;//gp_nr_stages;
+	  r_cnt        <= gp_nr_stages;
 	  r_shift_done <= 1'b0;
 	end
       else if (i_ena)
