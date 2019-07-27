@@ -1,12 +1,12 @@
 work
 source
 layout
-log
 synthesis
 *.vcd
 *.wlf
 *.ini
 *.vvp
+*.log
 qflow*
 a.out
 *.gch
