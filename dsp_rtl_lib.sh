@@ -15,6 +15,7 @@ CONFG_TOOL=false
 CONFG_GIT=false
 CONFG_DSN=false
 CONFG_PATH=false
+CONFG_DEMO=false
 
 # HELP [EXIT 3]
 if [ "$#" = 1 -a "$1" = "-help" -o "$1" = "-h" ]; then
@@ -174,10 +175,6 @@ then
   export RTL_DIR=${DSN_PATH}/rtl
   export SIM_DIR=${DSN_PATH}/sim
   export incdir="${SIM_DIR}/testbench"
-  echo $PRJ_DIR
-  echo $RTL_DIR
-  echo $SIM_DIR
-  echo $incdir 
 fi
 
 # DO NOT ACCEPT -C AND -T OPTIONS TOGETHER
@@ -363,6 +360,3 @@ then
   done  
   
 fi
-
-
-
