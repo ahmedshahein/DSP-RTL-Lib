@@ -1,1 +1,0 @@
-/home/shahein/ENGINEERING/CODES/verilog/dsp_rtl_lib/sgen_nco/sim/testcases/stimuli/nco_cos_rom_1.v

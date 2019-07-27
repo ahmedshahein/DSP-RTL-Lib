@@ -1,0 +1,8 @@
+gp_idata_width          = 8                           
+gp_interpolation_factor = 30		   
+gp_coeff_length 	= 53		   
+gp_coeff_width  	= 16		   
+gp_tf_df		= 1		   
+gp_comm_ccw		= 1		   
+gp_mul_ccw		= 1		   
+gp_comm_phase		= 0

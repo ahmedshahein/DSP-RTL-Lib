@@ -1,0 +1,4 @@
+gp_inp_width         = 8
+gp_coeff_length      = 17
+gp_coeff_width       = 12
+gp_symm 	     = 1

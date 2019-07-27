@@ -1,0 +1,5 @@
+gp_interpolation_factor = 4
+gp_order		= 3
+gp_diff_delay		= 1
+gp_phase		= 0
+gp_inp_width		= 8

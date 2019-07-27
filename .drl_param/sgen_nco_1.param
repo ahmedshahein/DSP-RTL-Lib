@@ -1,0 +1,3 @@
+gp_rom_width        = 8
+gp_rom_depth	    = 5
+gp_phase_accu_width = 16

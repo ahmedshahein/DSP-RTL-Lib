@@ -1,6 +1,0 @@
-gcc -m32 -I/home/shahein/intelFPGA_pro/18.0/modelsim_ase/include hello.c
-vlog -sv -ccflags "-m32" hello_pli.v hello.c 
-
-gcc -c -fPIC -I/home/shahein/intelFPGA_pro/18.0/modelsim_ase/include hello.c
-
-verilator --lint-only -Wall -y ./rtl rtl/cordic.v

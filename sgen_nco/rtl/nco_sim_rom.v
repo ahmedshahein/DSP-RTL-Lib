@@ -1,1 +1,0 @@
-/home/shahein/ENGINEERING/CODES/verilog/ppd/dsp_nco/sim/testcases/stimuli/nco_sin_rom_4.v

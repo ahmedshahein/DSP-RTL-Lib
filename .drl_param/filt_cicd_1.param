@@ -1,0 +1,5 @@
+gp_decimation_factor = 4
+gp_order	     = 5
+gp_diff_delay	     = 1
+gp_phase	     = 0
+gp_inp_width	     = 8

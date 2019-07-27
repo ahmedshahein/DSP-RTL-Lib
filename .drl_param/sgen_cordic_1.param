@@ -1,0 +1,7 @@
+gp_mode_rot_vec            = 0
+gp_impl_unrolled_iterative = 0
+gp_nr_iter		   = 16
+gp_angle_width  	   = 16
+gp_angle_depth  	   = 16
+gp_xy_width		   = 8
+gp_z_width		   = 8
