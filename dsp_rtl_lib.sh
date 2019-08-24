@@ -1,4 +1,8 @@
 #!/bin/bash
+# dsp_rtl_lib.sh
+# -------------------------------------------------------------------
+# Copyright (C) 2019 Ahmed Shahein
+# -------------------------------------------------------------------
 
 # LOCAL COMMANDS FOR TEXT COLORING
 color_green_cmd="$(tput setaf 2)"
@@ -15,6 +19,7 @@ CONFG_TOOL=false
 CONFG_GIT=false
 CONFG_DSN=false
 CONFG_PATH=false
+CONFG_SIM=false
 CONFG_DEMO=false
 
 # HELP [EXIT 3]
@@ -62,9 +67,14 @@ if [ "$#" = 1 -a "$1" = "-help" -o "$1" = "-h" ]; then
 		      from 1.
 		      P.S. This option is not supported yet!!!
         -path | -p  : Set the path for generating the desired modules.
+	-sim | -s   : Execute a single simulation run.
+	              ./dsp_rtl_lib.sh -s <ARGUMENT_1> <ARGUMENT_2>
+		      ARGUMENT_1 == design name, e.g., filt_mac
+		      ARGUMENT_2 == test-case number, e.g. 1 - 9
+		      ./dsp_rtl_lib.sh -s filt_cici 3
 	-demo       : Execute the script with the following arguments for a 
 	              sample module design of an FIR filter.
-	                ./chk_tools.sh -g -c -p ./ -d filt_cicd_1.param
+	              ./dsp_rtl_lib.sh -g -c -p ./ -d filt_cicd_1.param
        
        Exit Status:-
          exit 1: no RTL tool is identified
@@ -75,13 +85,14 @@ if [ "$#" = 1 -a "$1" = "-help" -o "$1" = "-h" ]; then
          exit 6: wrong library folder/path
          exit 7: do not accept arguments -c and -t together
 	 exit 8: wrong tool chain setup
-       
+         exit 9: do not overwrite the previous design
+	 
        Example:-
-       ./chk_tools.sh -chk
-       ./chk_tools.sh -t "iverilog"
-       ./chk_tools.sh -git -chk
-       ./chk_tools.sh -g -t "verilator"
-       ./chk_tools.sh -p "~/DSP_RTL_MODULES" -d filt_cicd_1.param
+       ./dsp_rtl_lib.sh -chk
+       ./dsp_rtl_lib.sh -t "iverilog"
+       ./dsp_rtl_lib.sh -git -chk
+       ./dsp_rtl_lib.sh -g -t "verilator"
+       ./dsp_rtl_lib.sh -p "~/DSP_RTL_MODULES" -d filt_cicd_1.param
        ###############################################################
        "
   echo "$msg"
@@ -123,20 +134,37 @@ else
 	  file_path=$PWD/$1;
           file_name=$1;	  
 	  dsn_name=$(echo $file_name | sed -e "s/$suffix//");
-	  DSN_PATH="$path/$dsn_name"
+	  DSN_PATH="$PWD/$dsn_name"
 	  echo $DSN_PATH
           export PRJ_DIR=$DSN_PATH
           export RTL_DIR=${DSN_PATH}/rtl
           export SIM_DIR=${DSN_PATH}/sim
 	  export incdir="${SIM_DIR}/testbench"
+	  export VVP_DIR=${DSN_PATH}/vvp
+	  export VCD_DIR=${DSN_PATH}/vcd
           ;;
+	"-sim" | "-s")
+	  shift;
+	  dsn_name=$1;
+	  shift
+	  tc=$1;
+	  CONFG_SIM=true;
+	  DSN_PATH="$PWD/$dsn_name"
+	  echo $DSN_PATH
+          export PRJ_DIR=$DSN_PATH
+          export RTL_DIR=${DSN_PATH}/rtl
+          export SIM_DIR=${DSN_PATH}/sim
+	  export incdir="${SIM_DIR}/testbench"
+	  export VVP_DIR=${DSN_PATH}/vvp
+	  export VCD_DIR=${DSN_PATH}/vcd	  
+	  ;;  
 	"-demo")
 	  CONFG_DEMO=true;
 	  CONFG_GIT=true;
 	  CONFG_CHK=true;
 	  CONFG_PATH=true;
 	  CONFG_DSN=true;
-	  ;;	  
+	  ;;	
         *)
           echo "###$color_red_cmd ERROR$color_reset_cmd  : Invalid option, please check -h for help."
 	  exit 4
@@ -164,7 +192,8 @@ fi
 
 if $CONFG_DEMO
 then
-  path=$PWD;
+  path=$PWD
+  echo "CURRENT PATH is $path"
   cp .drl_param/filt_cicd_1.param ./
   suffix='_[0-9].param';
   file_path=$PWD/filt_cicd_1.param;
@@ -175,6 +204,8 @@ then
   export RTL_DIR=${DSN_PATH}/rtl
   export SIM_DIR=${DSN_PATH}/sim
   export incdir="${SIM_DIR}/testbench"
+  export VVP_DIR=${DSN_PATH}/vvp
+  export VCD_DIR=${DSN_PATH}/vcd
 fi
 
 # DO NOT ACCEPT -C AND -T OPTIONS TOGETHER
@@ -275,12 +306,12 @@ cd ..
 echo "###$color_green_cmd INFO $color_reset_cmd  : Setup of DSP-RTL-Lib (DRL) is successful."
 echo "######################################################"
 
-if ! $CONFG_PATH
+if [ ! $CONFG_PATH ]
 then
   path=./
 fi
 
-if $CONF_TOOL
+if $CONFG_TOOL
 then
   case $RTL_TOOL  in
     "iverilog")
@@ -288,16 +319,16 @@ then
       cmd_com="iverilog -y$RTL_DIR	\
 	-I$RTL_DIR -I$incdir	\
 	-g2012	\
-	-o ${dsn_name}_CNT_.vvp	\
+	-o ${VVP_DIR}/${dsn_name}_CNT_.vvp	\
 	-DVCD	\
 	${SIM_DIR}/testbench/${dsn_name}_tb.sv"
 
-      cmd_sim="vvp -l ${DSN_PATH}/log/tc_CNT_.log ${dsn_name}_CNT_.vvp"
+      cmd_sim="vvp -l ${DSN_PATH}/log/tc_CNT_.log ${VVP_DIR}/${dsn_name}_CNT_.vvp"
       
       echo "###$color_green_cmd INFO $color_reset_cmd  : Icarus Verilog flow is setup."
       ;;
     "verilator")
-    #verilator -y rtl --top-module filt_cici filt_cici.v --sc -Wno-fatal
+    #cmd_com="verilator -y rtl --top-module ${dsn_name} ${dsn_name}.v --sc -Wno-fatal"
     ;;
     "modelsim")
     ;;
@@ -306,6 +337,17 @@ then
       echo "             run with -c to check the installed tools."
       exit 8
   esac
+else
+  cmd_com="iverilog -y$RTL_DIR      \
+    -I$RTL_DIR -I$incdir    \
+    -g2012  \
+    -o ${VVP_DIR}/${dsn_name}_CNT_.vvp      \
+    -DVCD   \
+    ${SIM_DIR}/testbench/${dsn_name}_tb.sv"
+
+  cmd_sim="vvp -l ${DSN_PATH}/log/tc_CNT_.log ${VVP_DIR}/${dsn_name}_CNT_.vvp"
+  
+  echo "###$color_green_cmd INFO $color_reset_cmd  : Icarus Verilog flow is the default setup."
 fi 
 
 # DESIGN A MODULE BASED ON .PARAM FILE
@@ -315,12 +357,12 @@ then
   cat $file_name
   
   y_n="y"
- # if [ -d "${DSN_PATH}/${dsn_name}" ]
- # then
- #   echo "### WARNING: The chosen path at $DSN_PATH is already available."
- #   echo              "Do you want to overwrite the current design? [y/n]"
- #   read y_n
- # fi
+  if [ -d "${DSN_PATH}/${dsn_name}" ]
+  then
+    echo "### WARNING: The chosen path at $DSN_PATH is already available."
+    echo              "Do you want to overwrite the current design? [y/n]"
+    read y_n
+  fi
 
   if [[ y_n == n ]]
   then
@@ -346,6 +388,8 @@ then
   
   FILES=$(ls ${PRJ_DIR}/sim/testcases/stimuli/stimuli_tc_*.dat)
 
+  mkdir vvp vcd
+  
   f=1
   for i in $FILES
   do
@@ -358,5 +402,21 @@ then
     eval $cmd_sim_rtl
     f=$(($f+1)) 
   done  
-  
+  mv *.vcd vcd
 fi
+
+# EXECUTE A SINGLE SIMULATION RUN
+if $CONFG_SIM
+then
+  cd $dsn_name
+  [ ! -d vvp ] && mkdir vvp
+  [ ! -d vcd ] && mkdir vcd
+  ln -sf ${PRJ_DIR}/sim/testcases/stimuli/defines_${tc}.sv ${PRJ_DIR}/sim/testbench/defines.sv
+  cmd_com_rtl=$(echo ${cmd_com} | sed "s/CNT_/$tc/g")
+  cmd_sim_rtl=$(echo ${cmd_sim} | sed "s/CNT_/$tc/g")
+  eval $cmd_com_rtl
+  eval $cmd_sim_rtl
+  gtkwave ${dsn_name}_${tc}.vcd
+  cd ..
+fi
+# EOF: dsp_rtl_lib.sh
