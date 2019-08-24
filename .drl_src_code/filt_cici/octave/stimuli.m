@@ -122,20 +122,13 @@
   gen_defines(defines);
   %% RESPONSE GENERATION
   octave_data=data;
-%  f = cicdesign(gp_interpolation_factor, gp_order, gp_diff_delay);
-%  yy = cicfilter(f, octave_data, gp_phase);
   
   [yy Hcic] = CICFilter(gp_diff_delay, gp_order, gp_interpolation_factor, gp_phase, 1, octave_data, 'i'); 
-%  if (yy == FilteredData)
-%    disp("###INFO: PASSED");
-%  else
-%    disp("### INFO: FAILED");
-%  end
   
   disp("### INFO: Generating response files.");
   filename_oup = strcat("response_tc_",num2str(testcase,"%d"),"_mat.dat");
-  %dlmwrite(filename_oup,yy,"\n");
-  save2file(filename_oup, yy);
+  dlmwrite(filename_oup,yy,"\n");
+  
   %% STIMULI GENERATION  
   disp("### INFO: Generating stimuli files.");
   filename_inp = strcat("stimuli_tc_",num2str(testcase,"%d"),"_mat.dat");
