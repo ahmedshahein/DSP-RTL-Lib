@@ -14,8 +14,9 @@ module filt_fir_tb;
   wire                 rdy;
   wire signed [`P_OUP_DATA_W-1:0] oup_data;
   reg                             data_ready;
-   integer error_count=0;
-   integer nr_of_samples=0;
+  integer error_count=0;
+  integer nr_of_samples=0;
+  reg [8*64:1]                    filename_vcd;
   // READ-IN MATLAB STIMULI FILE  
   reg [8*64:1]                    filename_mat_inp;
   integer                         fid_mat_inp;
@@ -46,7 +47,7 @@ module filt_fir_tb;
     begin: TEXTIO_READ_IN
       $display("### INFO: RTL Simulation of FIR Filter.");
       $display("### Testcase %d", `TESTCASE);
-      $write("### ");$system($sformatf("date"));
+      //$write("### ");$system($sformatf("date"));
       $sformat(filename_mat_inp,"%s%0d%s","./sim/testcases/stimuli/stimuli_tc_",`TESTCASE,"_mat.dat");
       $sformat(filename_mat_oup,"%s%0d%s","./sim/testcases/response/response_tc_",`TESTCASE,"_mat.dat");
       $display("%s",filename_mat_inp);
@@ -94,7 +95,7 @@ module filt_fir_tb;
   always @(negedge i_clk)
     begin
       if (i_rst_an && i_ena)
-        if (oup_data == o_data_mat) 
+        if (oup_data != o_data_mat) 
 	  begin 
 	    $error("### RTL = %d, MAT = %d", oup_data, o_data_mat); error_count<= error_count + 1;
 	  end
@@ -114,5 +115,14 @@ module filt_fir_tb;
     .i_data   (i_data),
     .o_data   (oup_data)
   );
+
+`ifdef VCD
+  initial
+     begin
+       $sformat(filename_vcd,"%s%0d%s","filt_fir_",`TESTCASE,".vcd");
+       $dumpfile(filename_vcd);
+       $dumpvars(0,filt_fir_tb);
+     end
+`endif
     
 endmodule
