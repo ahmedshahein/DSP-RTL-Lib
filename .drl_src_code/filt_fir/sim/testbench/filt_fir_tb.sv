@@ -94,8 +94,7 @@ module filt_fir_tb;
   always @(negedge i_clk)
     begin
       if (i_rst_an && i_ena)
-        assert (oup_data == o_data_mat) 
-	else
+        if (oup_data == o_data_mat) 
 	  begin 
 	    $error("### RTL = %d, MAT = %d", oup_data, o_data_mat); error_count<= error_count + 1;
 	  end
