@@ -44,7 +44,7 @@ module filt_cicd_tb;
   initial i_clk = 1'b0;
   always i_clk = #(CLK_PERIOD) ~i_clk;
   
-  initial assign s_clk = dut.w_sclk;
+  initial s_clk = #1 dut.w_sclk;
   initial
     begin: TEXTIO_READ_IN
       $display("### INFO: RTL Simulation of FIR Filter.");
