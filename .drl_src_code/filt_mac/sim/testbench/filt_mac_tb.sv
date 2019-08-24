@@ -23,6 +23,7 @@ module filt_mac_tb;
   reg                             load_response= 1'b0;
   integer error_count=0;
   integer count_clk_cycles=127;
+  reg [8*64:1]                    filename_vcd;
   // READ-IN MATLAB STIMULI FILE  
   reg [8*64:1]                    filename_mat_inp;
   integer                         fid_mat_inp;
@@ -87,7 +88,7 @@ module filt_mac_tb;
       $display("### INFO: RTL Simulation of FIR Filter.");
       $display("### Testcase %d", `TESTCASE);
       $write("### ");
-      $system($sformatf("date"));
+      //$system($sformatf("date"));
       $sformat(filename_mat_inp,"%s%0d%s","./sim/testcases/stimuli/stimuli_tc_",`TESTCASE,"_mat.dat");
       $sformat(filename_mat_oup,"%s%0d%s","./sim/testcases/response/response_tc_",`TESTCASE,"_mat.dat");
       $display("%s",filename_mat_inp);
@@ -135,8 +136,7 @@ module filt_mac_tb;
   always @(negedge s_clk)
     begin: CHK_OUP
       if (i_rst_an && i_ena)
-        assert (oup_data == o_data_mat) 
-	else
+        if (oup_data != o_data_mat)
 	  begin 
 	    $error("### RTL = %d, MAT = %d", oup_data, o_data_mat); error_count<= error_count + 1;
 	  end
@@ -188,5 +188,14 @@ module filt_mac_tb;
     .o_data   (oup_data),
     .o_done   (o_done)
   );
+
+`ifdef VCD
+  initial
+     begin
+       $sformat(filename_vcd,"%s%0d%s","filt_mac_",`TESTCASE,".vcd");
+       $dumpfile(filename_vcd);
+       $dumpvars(0,filt_mac_tb);
+     end
+`endif
     
 endmodule
