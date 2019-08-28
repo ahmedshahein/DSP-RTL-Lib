@@ -25,9 +25,10 @@ module sgen_cordic #(
 );
 // -------------------------------------------------------------------
   // CONSTANT DECLARATION
-  localparam c_xy_internal_width = gp_xy_width + $clog2(gp_nr_iter);
-  localparam c_z_internal_width  = gp_z_width  + $clog2(gp_nr_iter);
-  localparam c_iter_width        = (!gp_impl_unrolled_iterative) ? $clog2(gp_nr_iter) : 0;
+  localparam c_ext_bits          = $clog2(gp_nr_iter);
+  localparam c_xy_internal_width = gp_xy_width + c_ext_bits;
+  localparam c_z_internal_width  = gp_z_width;
+  localparam c_iter_width        = (!gp_impl_unrolled_iterative) ? c_ext_bits : 0;
   // WIRE DECLARATION
   wire signed [gp_angle_width-1:0] atan_lut [0:gp_angle_depth-1];
 // -------------------------------------------------------------------
@@ -39,17 +40,17 @@ module sgen_cordic #(
     if (gp_impl_unrolled_iterative)
       begin: g_cordic_unrolled
         // WIRE DECLARATION
-        wire signed [gp_xy_width-1:0] x_init;
-        wire signed [gp_xy_width-1:0] y_init;
-        wire signed [gp_z_width-1 :0] z_init;
+        wire signed [c_xy_internal_width-1:0] x_init;
+        wire signed [c_xy_internal_width-1:0] y_init;
+        wire signed [c_z_internal_width-1 :0] z_init;
         wire                                  d [0:gp_nr_iter-1];
         wire signed [c_xy_internal_width-1:0] x [0:gp_nr_iter-1];
         wire signed [c_xy_internal_width-1:0] y [0:gp_nr_iter-1];
         wire signed [c_z_internal_width-1 :0] z [0:gp_nr_iter-1];
 
 	// INITIALIZATION
-        assign x_init = i_x;
-	assign y_init = i_y;
+        assign x_init = i_x<<<c_ext_bits;
+	assign y_init = i_y<<<c_ext_bits;
 	assign z_init = i_z;
 	// CORDIC UNROLLED ITERATIONS
         for (i=0; i<gp_nr_iter; i=i+1)
@@ -58,11 +59,11 @@ module sgen_cordic #(
     	      begin: g_cordic_init
     	        if (gp_mode_rot_vec)
     	          begin: g_d_init_rot
-    	            assign d[i] = (i_z[gp_z_width-1] == 0)  ? 1'b1 : 1'b0;
+    	            assign d[i] = (z_init[c_z_internal_width-1] == 0)  ? 1'b1 : 1'b0;
     	          end
     	        else
     	          begin: g_d_init_vec
-    	            assign d[i] = (i_y[gp_xy_width-1] == 1) ? 1'b1 : 1'b0;
+    	            assign d[i] = (y_init[c_xy_internal_width-1] == 1) ? 1'b1 : 1'b0;
     	          end
     	        // CORDIC ALGORITHM
     	        assign x[i] = (d[i]) ? x_init - y_init      : x_init + y_init;
@@ -73,11 +74,11 @@ module sgen_cordic #(
     	      begin
     	        if (gp_mode_rot_vec)
     	          begin: g_d_rot
-    	            assign d[i] = (z[i-1][gp_z_width-1] == 0)  ? 1'b1 : 1'b0;
+    	            assign d[i] = (z[i-1][c_z_internal_width-1] == 0)  ? 1'b1 : 1'b0;
     	          end
     	        else
     	          begin: g_d_vec
-    	            assign d[i] = (y[i-1][gp_xy_width-1] == 1) ? 1'b1 : 1'b0;
+    	            assign d[i] = (y[i-1][c_xy_internal_width-1] == 1) ? 1'b1 : 1'b0;
     	          end	  
     	        // CORDIC ALGORITHM
     	        assign x[i] = (d[i]) ? x[i-1] - (y[i-1] >>> i) : x[i-1] + (y[i-1] >>> i);
@@ -136,8 +137,8 @@ module sgen_cordic #(
               begin
       	        if (r_count_iter>(gp_nr_iter-1))
       	          begin
-      	            r_x <= i_x;
-      	            r_y <= i_y;
+      	            r_x <= i_x<<<c_ext_bits;
+      	            r_y <= i_y<<<c_ext_bits;
       	            r_z <= i_z;
       	          end
       	        else
@@ -150,12 +151,12 @@ module sgen_cordic #(
           end
         
         // RESOURCE SHARING
-        assign w_x = (gp_mode_rot_vec) ? ( (r_z[gp_z_width-1])  ? -r_x :  r_x )   // ROTATION MODE
-	                               : ( (r_y[gp_xy_width-1]) ?  r_x : -r_x );  // VECTORING MODE
-        assign w_y = (gp_mode_rot_vec) ? ( (r_z[gp_z_width-1])  ?  r_y : -r_y )   // ROTATION MODE
-	                               : ( (r_y[gp_xy_width-1]) ? -r_y :  r_y );  // VECTORING MODE      
-        assign w_z = (gp_mode_rot_vec) ? ( (r_z[gp_z_width-1])  ?  atan_lut[r_count_iter] : -atan_lut[r_count_iter])   // ROTATION MODE
-                                       : ( (r_y[gp_xy_width-1]) ? -atan_lut[r_count_iter] :  atan_lut[r_count_iter]);  // VECTORING MODE
+        assign w_x = (gp_mode_rot_vec) ? ( (r_z[c_z_internal_width-1])  ? -r_x :  r_x )   // ROTATION MODE
+	                               : ( (r_y[c_xy_internal_width-1]) ?  r_x : -r_x );  // VECTORING MODE
+        assign w_y = (gp_mode_rot_vec) ? ( (r_z[c_z_internal_width-1])  ?  r_y : -r_y )   // ROTATION MODE
+	                               : ( (r_y[c_xy_internal_width-1]) ? -r_y :  r_y );  // VECTORING MODE      
+        assign w_z = (gp_mode_rot_vec) ? ( (r_z[c_z_internal_width-1])  ?  atan_lut[r_count_iter] : -atan_lut[r_count_iter])   // ROTATION MODE
+                                       : ( (r_y[c_xy_internal_width-1]) ? -atan_lut[r_count_iter] :  atan_lut[r_count_iter]);  // VECTORING MODE
         
 	// CORDIC ALGORITHM - ITERATIVE RESOURCE SHARING
         assign x = r_x + (w_y >>> r_count_iter);
@@ -180,7 +181,7 @@ module cordic_gain #(
   parameter gp_mode_rot_vec = 0,
   parameter gp_gain_width   = 12,
   parameter gp_xy_width     = 8,
-  parameter gp_xy_owidth    = gp_xy_width+$clog2(12)
+  parameter gp_xy_owidth    = gp_xy_width+$clog2(gp_gain_width)
 ) (
   input  wire signed [gp_xy_width-1 :0] i_cordic_x,
   input  wire signed [gp_xy_width-1 :0] i_cordic_y,
