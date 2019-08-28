@@ -2,30 +2,22 @@
 // Copyright (C) 2019 Ahmed Shahein
 // -------------------------------------------------------------------
 `timescale 1ns/1ps
-//`include "defines.sv"
-//`define LOG2(X) (X<2) ? 0 : (1+LOG2(X>>1))
-//$floor($log10(MAX_COUNT)/$log10(2));
+`include "defines.sv"
 // -------------------------------------------------------------------
 module sgen_cordic_tb;
-  function automatic int log2(int x);
-    if (x < 2)
-      log2 = 0;
-    else
-      log2 = log2(x>>1) + 1;
-  endfunction
   
-  time CLK_PERIOD = 50;
+  time F_CLK_PERIOD = 50;
+  time S_CLK_PERIOD = 50*`P_ITER;
   
   reg       i_rst_an;
   reg       i_ena;
   reg       i_clk;
-  reg       s_clk;
-  
- // reg [`P_INP_DATA_W-1:0] i_data;
-  wire                 rdy;
-  //wire signed [`P_OUP_DATA_W-1:0] oup_data;
-  reg                             data_ready;
+  wire      s_clk;
+  reg       f_clk;
+  reg       data_ready=1'b0;
+  integer   counter;
   integer error_count=0;
+  reg [8*64:1]                    filename_vcd;
   // READ-IN MATLAB STIMULI FILE  
   reg [8*64:1]                    filename_mat_inp;
   integer                         fid_mat_inp;
@@ -34,45 +26,62 @@ module sgen_cordic_tb;
   reg [8*64:1]                    filename_mat_oup;
   integer                         fid_mat_oup;
   integer                         status_mat_oup;
-  //reg signed [`P_OUP_DATA_W-1:0]       o_data_mat;
+  // READ-IN MATLAB RESPONSE FILE
+  reg [8*64:1]                    filename_mat_dbg;
+  integer                         fid_mat_dbg;
+  integer                         status_mat_dbg;
+  // MATLAB DEBUG OUTPUTS
+  reg signed [`P_XY_WIDTH+$clog2(`P_ITER)-1:0] o_x_mat; 
+  reg signed [`P_XY_WIDTH+$clog2(`P_ITER)-1:0] o_y_mat; 
+  reg signed [`P_Z_WIDTH +$clog2(`P_ITER)-1:0] o_z_mat; 
+  reg signed [1                            :0] o_d_mat;
+  
+  reg signed [`P_XY_WIDTH-1:0] i_x;
+  reg signed [`P_XY_WIDTH-1:0] i_y;
+  reg signed [`P_Z_WIDTH-1 :0] i_z;
+  
+  reg signed [`P_XY_WIDTH+$clog2(`P_ITER)-1:0] o_x_a_mat;
+  reg signed [`P_XY_WIDTH-1:0] o_y_r_mat;//???? change width based on mode of operation
 // -------------------------------------------------------------------    
 
   initial
     begin
-           i_rst_an = 1'b1;
-      #170 i_rst_an = 1'b0;
-      #205 i_rst_an = 1'b1;
+                         i_rst_an = 1'b1;
+      #1                 i_rst_an = 1'b0;
+      #(S_CLK_PERIOD-10) i_rst_an = 1'b1;
     end
   
   initial
     begin
-           i_ena = 1'b0;
-      #400 i_ena = 1'b1;
+                        i_ena = 1'b0;
+      #(S_CLK_PERIOD-1) i_ena = 1'b1;
     end
   
-  initial i_clk = 1'b0;
-  always i_clk = #(CLK_PERIOD) ~i_clk;
-  
-  initial
+  initial f_clk = 1'b1;
+  always f_clk = #(F_CLK_PERIOD) ~f_clk;
+
+  initial counter = 1024;
+  always @(posedge f_clk)
     begin
-      $display("### log2(%d) = %d",  4, log2(4)+1);
-      $display("### log2(%d) = %d",  8, log2(8)+1);
-      $display("### log2(%d) = %d",  9, log2(9)+1);
-      $display("### log2(%d) = %d", 15, log2(15)+1);
-      $display("### log2(%d) = %d", 16, log2(16)+1);      
+      if (counter < `P_ITER-1)
+        counter <= counter + 1;
+      else
+        counter <= 0;
     end
- /* initial assign s_clk = dut.w_sclk;
+  assign s_clk = (counter < `P_ITER/2) ? 1'b0 : 1'b1;  
+  
+  assign #1 i_clk =  (`P_IMPL_U_I) ? s_clk : f_clk;
+    
   initial
     begin: TEXTIO_READ_IN
       $display("### INFO: RTL Simulation of FIR Filter.");
       $display("### Testcase %d", `TESTCASE);
-      $write("### ");
-      $system($sformatf("date"));
       $sformat(filename_mat_inp,"%s%0d%s","./sim/testcases/stimuli/stimuli_tc_",`TESTCASE,"_mat.dat");
-      $sformat(filename_mat_oup,"%s%0d%s","./sim/testcases/response/response_tc_",`TESTCASE,"_mat.dat");
-      $display("%s",filename_mat_inp);
+      $sformat(filename_mat_oup,"%s%0d%s","./sim/testcases/response/response_tc_",`TESTCASE,"_oup_mat.dat");
+      $sformat(filename_mat_dbg,"%s%0d%s","./sim/testcases/response/response_tc_",`TESTCASE,"_dbg_mat.dat");
       fid_mat_inp = $fopen(filename_mat_inp, "r");
       fid_mat_oup = $fopen(filename_mat_oup, "r");
+      fid_mat_dbg = $fopen(filename_mat_dbg, "r");
       if ((fid_mat_inp == `NULL)||(fid_mat_oup == `NULL)) begin
         $display("data_file handle was NULL");
         $finish;
@@ -82,7 +91,8 @@ module sgen_cordic_tb;
         begin 
 	  $fclose(fid_mat_inp); 
 	  $fclose(fid_mat_oup); 
-
+          $fclose(fid_mat_dbg);
+	  
 	  if (error_count>0)
             $display("### INFO: Testcase FAILED");
           else
@@ -92,53 +102,70 @@ module sgen_cordic_tb;
 	end
     end
     
-  always @(posedge i_clk)
+  always @(posedge s_clk)
     begin: MATLAB_STIMULI
       if (i_rst_an && i_ena)
-        status_mat_inp = $fscanf(fid_mat_inp,"%d\n", i_data);
-      else
-        i_data = AMPd0;
-	
-      if ($feof(fid_mat_inp)) begin
-        data_ready = 1'b1;
-      end
+        status_mat_inp = $fscanf(fid_mat_inp,"%d %d %d\n", i_x, i_y, i_z);
     end
   
   always @(negedge s_clk)
     begin: MATLAB_RESPONSE
       if (i_rst_an && i_ena)
-        status_mat_oup = $fscanf(fid_mat_oup,"%d\n", o_data_mat);
+        status_mat_oup = $fscanf(fid_mat_oup,"%d %d\n", o_x_a_mat, o_y_r_mat);
     end
-
-  always @(negedge s_clk)
-    begin
+    
+  always @(negedge f_clk)
+    begin: MATLAB_DEBUG
       if (i_rst_an && i_ena)
-        assert (oup_data == o_data_mat) 
-	else
-	  begin 
-	    $error("### RTL = %d, MAT = %d", oup_data, o_data_mat); error_count<= error_count + 1;
-	  end
-    end*/
+        status_mat_dbg = $fscanf(fid_mat_dbg,"%d %d %d %d\n", o_x_mat, o_y_mat, o_z_mat, o_d_mat);
       
+      if ($feof(fid_mat_dbg)) begin
+        data_ready = 1'b1;
+      end
+    end
+    
+  wire signed [`P_XY_WIDTH-1:0] x_2_gain; 
+  wire signed [`P_XY_WIDTH-1:0] y_2_gain; 
   sgen_cordic #(
-    .gp_mode_rot_vec	        (1),
-    .gp_impl_unrolled_iterative (1),
-    .gp_nr_iter 	        (12),
-    .gp_angle_width	        (16),
-    .gp_angle_depth             (12),
-    .gp_xy_width	        (24),
-    .gp_z_width 	        (16)
+    .gp_mode_rot_vec	        (`P_MODE_ROT_VEC),
+    .gp_impl_unrolled_iterative (`P_IMPL_U_I),
+    .gp_nr_iter 	        (`P_ITER),
+    .gp_angle_width	        (`P_ATAN_LUT_WIDTH),
+    .gp_angle_depth             (`P_ATAN_LUT_DEPTH),
+    .gp_xy_width	        (`P_XY_WIDTH),
+    .gp_z_width 	        (`P_Z_WIDTH)
   ) dut (
     .i_rst_an(i_rst_an),
     .i_ena(i_ena),
     .i_clk(i_clk),
-    .i_x('d4194304), //('d2097152),
-    .i_y('d0),       //('d2097152),
-    .i_z('sd20016),
-    .o_x(),
-    .o_y(),
+    .i_x(i_x),
+    .i_y(i_y), 
+    .i_z(i_z),
+    .o_x(x_2_gain),
+    .o_y(y_2_gain),
     .o_z(),
     .o_done()
   );
+
+  cordic_gain #(
+    .gp_mode_rot_vec (`P_MODE_ROT_VEC),
+    .gp_gain_width   (`P_ATAN_GAIN_WIDTH),
+    .gp_xy_width     (`P_XY_WIDTH),
+    .gp_xy_owidth    ()
+  ) gain_compensation (
+    .i_cordic_x (x_2_gain),
+    .i_cordic_y (y_2_gain),
+    .o_cordic_x (),
+    .o_cordic_y ()
+  );
+  
+`ifdef VCD
+  initial
+     begin
+       $sformat(filename_vcd,"%s%0d%s","sgen_cordic_",`TESTCASE,".vcd");
+       $dumpfile(filename_vcd);
+       $dumpvars(0,sgen_cordic_tb);
+     end
+`endif
     
 endmodule
