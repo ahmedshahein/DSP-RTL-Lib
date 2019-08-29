@@ -2,9 +2,9 @@
   clear
   clc  
 
-  param.gp_rom_width        = 16;
-  param.gp_rom_depth        = 16;
-  param.gp_phase_accu_width = 32;
+  param.gp_rom_width        = 8;
+  param.gp_rom_depth        = 5;
+  param.gp_phase_accu_width = 16;
   param.ampl                = 1;
   param.offset              = 0;
   param.phase               = 0;
@@ -40,20 +40,20 @@
       param.nr_of_samples       = 2^12;
       param.NFFT                = 2^12;
       fcw                       = floor( (param.fo/param.fs)*2^param.gp_phase_accu_width );
-      data = nco(param);
-      data1 = data;
+      [osin, ocos] = nco(param);
+      data1 = [osin' ocos'];
       fcw1 = fcw.*ones(1,length(data1));
       param.fo                  = 333.33;
       fcw                       = floor( (param.fo/param.fs)*2^param.gp_phase_accu_width );
-      data = nco(param);
-      data2 = data;
+      [osin, ocos] = nco(param);
+      data2 = [osin' ocos'];
       fcw2 = fcw.*ones(1,length(data1));
       param.fo                  = 1337;
       fcw                       = floor( (param.fo/param.fs)*2^param.gp_phase_accu_width );
-      data = nco(param);  
-      data3 = data;
+      [osin, ocos] = nco(param);  
+      data3 = [osin' ocos'];
       fcw3 = fcw.*ones(1,length(data1));
-      ref_data = [data1 data2 data3];    
+      ref_data = [data1; data2; data3];    
       ref_fcw = [fcw1 fcw2 fcw3];
       
   endswitch
@@ -67,15 +67,15 @@
   defines.testcase            = testcase;
   gen_defines(defines);
   %% RESPONSE GENERATION
-  data = nco(param);
+  [osin, ocos] = nco(param);
   if (testcase ~= 4)
-    octave_data = data;
+    octave_data = [osin' ocos'];
   else
     octave_data = ref_data;
   endif  
   disp("### INFO: Generating response files.");
   filename_oup = strcat("response_tc_",num2str(testcase,"%d"),"_mat.dat");
-  dlmwrite(filename_oup,octave_data,"\n");
+  dlmwrite(filename_oup,octave_data,'delimiter',' ');
   %% STIMULI GENERATION  
   disp("### INFO: Generating stimuli files.");
   if (testcase ~= 4)
