@@ -72,9 +72,9 @@ The folder structure for each designed module is as follow (e.g. filt_ppd)
 -  |_ octave
 -  |_ rtl
 -  |_ sim
--    |_testbench
--    |_ testcases
--      |_ response
--      |_ stimuli
+   -    |_testbench
+   -    |_ testcases
+        -      |_ response
+        -      |_ stimuli
 -  |_ vcd
 -  |_ vvp
