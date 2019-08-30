@@ -394,7 +394,14 @@ then
   for i in $FILES
   do
     echo "Simulating testcase " $f
-    ln -sf ${PRJ_DIR}/sim/testcases/stimuli/defines_$f.sv ${PRJ_DIR}/sim/testbench/defines.sv
+    if [ "$dsn_name" = "sgen_nco" ];
+    then
+      ln -sf ${PRJ_DIR}/sim/testcases/stimuli/defines_$f.sv ${PRJ_DIR}/sim/testbench/defines.sv
+      ln -sf ${PRJ_DIR}/sim/testcases/stimuli/nco_cos_rom_$f.v ${PRJ_DIR}/rtl/nco_cos_rom.v
+      ln -sf ${PRJ_DIR}/sim/testcases/stimuli/nco_sin_rom_$f.v ${PRJ_DIR}/rtl/nco_sin_rom.v
+    else
+      ln -sf ${PRJ_DIR}/sim/testcases/stimuli/defines_$f.sv ${PRJ_DIR}/sim/testbench/defines.sv
+    fi
     x=${f}
     cmd_com_rtl=$(echo ${cmd_com} | sed "s/CNT_/$x/g")
     cmd_sim_rtl=$(echo ${cmd_sim} | sed "s/CNT_/$x/g")
@@ -411,7 +418,16 @@ then
   cd $dsn_name
   [ ! -d vvp ] && mkdir vvp
   [ ! -d vcd ] && mkdir vcd
-  ln -sf ${PRJ_DIR}/sim/testcases/stimuli/defines_${tc}.sv ${PRJ_DIR}/sim/testbench/defines.sv
+  echo "###### $dsn_name"
+  if [ "$dsn_name" = "sgen_nco" ];
+  then
+    echo "###### I am here ..."
+    ln -sf ${PRJ_DIR}/sim/testcases/stimuli/defines_${tc}.sv ${PRJ_DIR}/sim/testbench/defines.sv
+    ln -sf ${PRJ_DIR}/sim/testcases/stimuli/nco_cos_rom_${tc}.v ${PRJ_DIR}/rtl/nco_cos_rom.v
+    ln -sf ${PRJ_DIR}/sim/testcases/stimuli/nco_sin_rom_${tc}.v ${PRJ_DIR}/rtl/nco_sin_rom.v
+  else
+    ln -sf ${PRJ_DIR}/sim/testcases/stimuli/defines_${tc}.sv ${PRJ_DIR}/sim/testbench/defines.sv
+  fi
   cmd_com_rtl=$(echo ${cmd_com} | sed "s/CNT_/$tc/g")
   cmd_sim_rtl=$(echo ${cmd_sim} | sed "s/CNT_/$tc/g")
   eval $cmd_com_rtl
