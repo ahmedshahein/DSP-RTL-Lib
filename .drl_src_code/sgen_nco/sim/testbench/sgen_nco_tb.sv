@@ -83,7 +83,7 @@ module sgen_nco_tb;
 	end
     end
     
-  always @(posedge i_clk)
+  always @(posedge s_clk)
     begin: MATLAB_STIMULI
       if (i_rst_an && i_ena)
         status_mat_inp = $fscanf(fid_mat_inp,"%d\n", i_fcw);
