@@ -143,15 +143,13 @@ integer error;
     
   always @(posedge i_fclk)
     begin: ASSERT_OUP_CHK
-      if (i_rst_an && i_ena && (r_start_chk == 3)) begin
-//$display("%d, %d", o_data_rtl, o_data_mat);        
-if (o_data_rtl !== o_data_mat) 
-	//else
-	  begin 
-	    $error("### RTL = %d, MAT = %d", o_data_rtl, o_data_mat); error_count<= error_count + 1;
-
-	  end
-      end
+      if (i_rst_an && i_ena && (r_start_chk == 3)) 
+        begin        
+          if (o_data_rtl !== o_data_mat) 
+	    begin 
+	      $error("### RTL = %d, MAT = %d", o_data_rtl, o_data_mat); error_count<= error_count + 1;
+	    end
+        end
     end
     
 `ifdef VCD
@@ -159,7 +157,7 @@ if (o_data_rtl !== o_data_mat)
      begin
        $sformat(filename_vcd,"%s%0d%s","filt_ppi_",`TESTCASE,".vcd");
        $dumpfile(filename_vcd);
-       $dumpvars(0,filename_vcd);
+       $dumpvars(0,filt_ppi_tb);
      end
 `endif
     
