@@ -64,3 +64,17 @@ To design a new module (e.g. filt_ppd):
 3. nedit filt_ppd_1.param (enter the design configuration values as indicated)
 4. ./dsp_rtl_lib.sh -d filt_ppd_1.param
 
+## Folder Structure
+The folder structure for each designed module is as follow (e.g. filt_ppd)
+
+- filt_ppd
+  |_ log
+  |_ octave
+  |_ rtl
+  |_ sim
+    |_testbench
+    |_ testcases
+      |_ response
+      |_ stimuli
+  |_ vcd
+  |_ vvp
