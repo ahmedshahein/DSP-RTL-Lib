@@ -59,8 +59,8 @@ I recommend the following coding style which I used during the development of th
 4. Execute the demo command which will clone the repository, design a CIC decimation filter, and execute a regression verification (./dsp_rtl_lib.sh -demo).
 
 To design a new module (e.g. filt_ppd):
-cd DSP_RTL_Lib
-cp .drl_param/filt_ppd_1.param ./
-nedit filt_ppd_1.param (enter the design configuration values as indicated)
-./dsp_rtl_lib.sh -d filt_ppd_1.param
+1. cd DSP_RTL_Lib
+2. cp .drl_param/filt_ppd_1.param ./
+3. nedit filt_ppd_1.param (enter the design configuration values as indicated)
+4. ./dsp_rtl_lib.sh -d filt_ppd_1.param
 
