@@ -38,14 +38,14 @@ module sgen_nco_tb;
   initial
     begin
            i_rst_an = 1'b1;
-      #170 i_rst_an = 1'b0;
-      #205 i_rst_an = 1'b1;
+      #1   i_rst_an = 1'b0;
+      #(2*2*CLK_PERIOD+CLK_PERIOD-3) i_rst_an = 1'b1;
     end
   
   initial
     begin
            i_ena = 1'b0;
-      #400 i_ena = 1'b1;
+      #(2*2*CLK_PERIOD+CLK_PERIOD-1) i_ena = 1'b1;
     end
   
   initial s_clk = 1'b0;
@@ -83,7 +83,7 @@ module sgen_nco_tb;
 	end
     end
     
-  always @(posedge s_clk)
+  always @(posedge i_clk)
     begin: MATLAB_STIMULI
       if (i_rst_an && i_ena)
         status_mat_inp = $fscanf(fid_mat_inp,"%d\n", i_fcw);
@@ -98,8 +98,7 @@ module sgen_nco_tb;
   always @(posedge i_clk)
     begin: MATLAB_RESPONSE
       if (i_rst_an && i_ena)
-        //status_mat_oup = $fscanf(fid_mat_oup,"%d %d\n", o_sin_mat, o_cos_mat);
-	status_mat_oup = $fscanf(fid_mat_oup,"%d\n", o_sin_mat);
+        status_mat_oup = $fscanf(fid_mat_oup,"%d %d\n", o_sin_mat, o_cos_mat);
     end
 
   always @(negedge i_clk)
