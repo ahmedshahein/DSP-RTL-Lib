@@ -18,10 +18,11 @@ lut_cos   = round(A*cos(2*pi*(0:k-1)/k));
 ptr   = 0; 
 addr  = 0;
 for i = 1:n 
-    osin(i)         = lut_sin(addr+1);          %add 1 for matlab LUT
-    ocos(i)         = lut_cos(addr+1); 
+
     ptr             = mod(ptr + fcw, M);    %phase accumulator(ramp)
     addr            = floor(ptr/2^lsb);     %discard LSBs %%round
     addr(addr >= k) = addr - k;             %check address overflow
+    osin(i)         = lut_sin(addr+1);          %add 1 for matlab LUT
+    ocos(i)         = lut_cos(addr+1); 
 end
 %% EOF
