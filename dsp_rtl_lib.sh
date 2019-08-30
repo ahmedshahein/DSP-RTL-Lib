@@ -65,7 +65,8 @@ if [ "$#" = 1 -a "$1" = "-help" -o "$1" = "-h" ]; then
 		      The <instance_number> is an indication how many instances
 		      do you want to generate from the same module. It starts
 		      from 1.
-		      P.S. This option is not supported yet!!!
+		      P.S. If the .param file is not specified the module is generated based on the local parameters.
+		           The _<instance_number> option is not supported yet.
         -path | -p  : Set the path for generating the desired modules.
 	-sim | -s   : Execute a single simulation run.
 	              ./dsp_rtl_lib.sh -s <ARGUMENT_1> <ARGUMENT_2>
