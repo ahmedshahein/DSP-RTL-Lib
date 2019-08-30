@@ -16,10 +16,10 @@ cos_samples = A * cos( (pi/4) * [0:ROM_DEPTH-1]./ROM_DEPTH + Phase) + Offset;
 sin_max     = A * sin( pi/4 + Phase) + Offset;
 cos_max     = A * cos( pi/4 + Phase) + Offset;
 
-sin_samples_int = round( (2^ROM_WIDTH-1) * sin_samples );
-cos_samples_int = round( (2^ROM_WIDTH-1) * cos_samples );
-sin_max_int     = round( (2^ROM_WIDTH-1) * sin_max );
-cos_max_int     = round( (2^ROM_WIDTH-1) * cos_max );
+sin_samples_int = round( (2^(ROM_WIDTH-1)-1) * sin_samples );
+cos_samples_int = round( (2^(ROM_WIDTH-1)-1) * cos_samples );
+sin_max_int     = round( (2^(ROM_WIDTH-1)-1) * sin_max );
+cos_max_int     = round( (2^(ROM_WIDTH-1)-1) * cos_max );
 
 fid_sin = fopen("nco_sin_rom.v", "w");
 fid_cos = fopen("nco_cos_rom.v", "w");
