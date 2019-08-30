@@ -44,13 +44,12 @@ module filt_cicd_tb;
   initial i_clk = 1'b0;
   always i_clk = #(CLK_PERIOD) ~i_clk;
   
-  assign s_clk = dut.w_sclk;
+  assign #1 s_clk = dut.w_sclk;
   
   initial
     begin: TEXTIO_READ_IN
       $display("### INFO: RTL Simulation of FIR Filter.");
       $display("### Testcase %d", `TESTCASE);
-      //$write("### ");$system($sformatf("date"));
       $sformat(filename_mat_inp,"%s%0d%s","./sim/testcases/stimuli/stimuli_tc_",`TESTCASE,"_mat.dat");
       $sformat(filename_mat_oup,"%s%0d%s","./sim/testcases/response/response_tc_",`TESTCASE,"_mat.dat");
       $display("%s",filename_mat_inp);
@@ -91,6 +90,8 @@ module filt_cicd_tb;
     begin: MATLAB_RESPONSE
       if (i_rst_an && i_ena)
         status_mat_oup = $fscanf(fid_mat_oup,"%d\n", o_data_mat);
+      else
+        o_data_mat = 'd0;
     end
 
   always @(posedge s_clk)
