@@ -52,11 +52,15 @@ I recommend the following coding style which I used during the development of th
 * Rising edge flip-flops are only used
 * Arithmetic computations are carried out based on fixed-point 2’s complement data type.
 
-## References
-[1]: R. Lyons, “Understanding Digital Signal Processing”, 2004.
-[2]: A. Shahein, “Power optimization methodologies for digital FIR decimation filters”, 2014. 
-[3] A. Shahein, Q. Zhang, N. Lotze and Y. Manoli, "A Novel Hybrid Monotonic Local Search Algorithm for FIR Filter Coefficients Optimization," in IEEE Transactions on Circuits and Systems I: Regular Papers, vol. 59, no. 3, pp. 616-627, March 2012.
-[4] A. Shahein, M. Afifi, M. Becker, N. Lotze and Y. Manoli, "A Power-Efficient Tunable Narrow-Band Digital Front End for Bandpass Sigma–Delta ADCs in Digital FM Receivers," in IEEE Transactions on Circuits and Systems II: Express Briefs, vol. 57, no. 11, pp. 883-887, Nov. 2010.
-[5] A. Shahein, M. Becker, N. Lotze and Y. Manoli, "Power aware combination of transposed-form and direct-form FIR polyphase decimators for Sigma-Delta ADCs," 2009 52nd IEEE International Midwest Symposium on Circuits and Systems, Cancun, 2009, pp. 607-610.
-[6] A. Shahein, M. Becker, N. Lotze, M. Ortmanns and Y. Manoli, "Optimized scheme for power-of-two coefficient approximation for low power decimation filters in sigma delta ADCs," 2008 51st Midwest Symposium on Circuits and Systems, Knoxville, TN, 2008, pp. 787-790.
-[7] A. Shahein, “Design and Implementation in VHDL of a Decimator for BPΣ∆ Converters”, 2007.
+## Get Started
+1. Make sure that you have the Icarus Verilog installed on your machine.
+2. Download the dsp_rtl_lib.sh script individually.
+3. Make sure it is executable (ls -la, if it isn't then use chmod +x dsp_rtl_lib.sh).
+4. Execute the demo command which will clone the repository, design a CIC decimation filter, and execute a regression verification (./dsp_rtl_lib.sh -demo).
+
+To design a new module (e.g. filt_ppd):
+cd DSP_RTL_Lib
+cp .drl_param/filt_ppd_1.param ./
+nedit filt_ppd_1.param (enter the design configuration values as indicated)
+./dsp_rtl_lib.sh -d filt_ppd_1.param
+
