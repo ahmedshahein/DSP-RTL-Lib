@@ -1,151 +1,103 @@
 // -------------------------------------------------------------------
 // Copyright (C) 2019 Ahmed Shahein
 // -------------------------------------------------------------------
-`timescale 1us/1ns
-`include "defines.sv"
-`define ABS(X) (X)<(0)?(-X):(X)
+//
 // -------------------------------------------------------------------
-module sgen_nco_tb;
-  time CLK_PERIOD = 50.0;// 10kHz   
-  
-  reg       i_rst_an;
-  reg       i_ena;
-  reg       i_clk;
-  reg       s_clk;
-  
-  reg [`P_PHASEACCU_WIDTH-1:0] i_fcw;
-  wire                 rdy;
-  wire signed [`P_ROM_WIDTH:0] o_sin_rtl,o_cos_rtl;
-  reg                             data_ready;
-  integer error_count=0;
-  reg [8*64:1]                    filename_vcd;
-  // READ-IN MATLAB STIMULI FILE  
-  reg [8*64:1]                    filename_mat_inp;
-  integer                         fid_mat_inp;
-  integer                         status_mat_inp;  
-  // READ-IN MATLAB RESPONSE FILE
-  reg [8*64:1]                    filename_mat_oup;
-  integer                         fid_mat_oup;
-  integer                         status_mat_oup;
-  reg signed [`P_ROM_WIDTH:0]     o_sin_mat,  o_cos_mat;
-  // WRITE-OUT RTL RESPONSE FILE  
-  reg [8*64:1]                    filename_rtl_oup;
-  integer                         fid_rtl_oup;
-  integer                         status_rtl_oup;  
-  // RTL MATLAB TOLERANCE
-  integer diff, abs_diff;
-// -------------------------------------------------------------------    
-  initial
-    begin
-           i_rst_an = 1'b1;
-      #170 i_rst_an = 1'b0;
-      #205 i_rst_an = 1'b1;
-    end
-  
-  initial
-    begin
-           i_ena = 1'b0;
-      #400 i_ena = 1'b1;
-    end
-  
-  initial s_clk = 1'b0;
-  always s_clk = #(CLK_PERIOD) ~s_clk;
-  
-  //initial s_clk = #5 i_clk;
-  
-  assign #1 i_clk =  s_clk;
-  
-  initial
-    begin: TEXTIO_READ_IN
-      $display("### INFO: RTL Simulation of NCO.");
-      $display("### Testcase %d", `TESTCASE);
-      $sformat(filename_mat_inp,"%s%0d%s","./sim/testcases/stimuli/stimuli_tc_",`TESTCASE,"_mat.dat");
-      $sformat(filename_mat_oup,"%s%0d%s","./sim/testcases/response/response_tc_",`TESTCASE,"_mat.dat");
-      $display("%s",filename_mat_inp);
-      fid_mat_inp = $fopen(filename_mat_inp, "r");
-      fid_mat_oup = $fopen(filename_mat_oup, "r");
-      if ((fid_mat_inp == `NULL)||(fid_mat_oup == `NULL)) begin
-        $display("data_file handle was NULL");
-        $finish;
-      end
-      
-      @(posedge data_ready) 
-        begin 
-	  $fclose(fid_mat_inp); 
-	  $fclose(fid_mat_oup); 
-
-	  if (error_count>0)
-            $display("### INFO: Testcase FAILED");
-          else
-            $display("### INFO: Testcase PASSED");
-	    
-  	  $finish; 
+module sgen_nco #(
+  parameter gp_rom_width        = 8,  // ROM address bit-width
+  parameter gp_rom_depth        = 5,
+  parameter gp_phase_accu_width = 16
+) (
+  input  wire                                  i_rst_an,
+  input  wire                                  i_ena,
+  input  wire                                  i_clk,
+  input  wire        [gp_phase_accu_width-1:0] i_fcw,
+  output wire signed [gp_rom_width:0]          o_sin,
+  output wire signed [gp_rom_width:0]          o_cos
+);
+// -------------------------------------------------------------------
+  // CONSTANT DECLARATION
+  localparam c_rom_depth = 2**gp_rom_depth;
+  // REGISTER DECLARATION
+  reg         [gp_phase_accu_width-1:0] r_phase_accu;
+  // WIRE DECLARATION
+  wire        [gp_rom_width-1:0] nco_sin_rom [0:c_rom_depth-1];
+  wire        [gp_rom_width-1:0] nco_cos_rom [0:c_rom_depth-1];
+  wire        [gp_rom_width-1:0] nco_sin_max;
+  wire        [gp_rom_width-1:0] nco_cos_max;
+  wire        [2:0]              w_ctrl;
+  wire        [gp_rom_depth-1:0] w_addr;
+  wire                           w_sin_sign;
+  wire                           w_sin_sinorcos;
+  wire                           w_cos_sign;
+  wire                           w_cos_sinorcos;
+  wire                           w_sin_cos_mirror;
+  wire                           w_sel_sin_max;
+  wire                           w_sel_cos_max;
+  reg  signed [gp_rom_width:0]   w_sin;
+  reg  signed [gp_rom_width:0]   w_cos;
+// -------------------------------------------------------------------
+  `include "nco_sin_rom.v"
+  `include "nco_cos_rom.v"
+// -------------------------------------------------------------------
+  always @(posedge i_clk or negedge i_rst_an)
+    begin: p_phase_accu
+      if (!i_rst_an)
+        begin
+	  r_phase_accu <= {gp_phase_accu_width{1'b0}};
+	end
+      else if (i_ena)
+        begin
+	  r_phase_accu <= r_phase_accu + i_fcw;
 	end
     end
-    
-  always @(posedge i_clk)
-    begin: MATLAB_STIMULI
-      if (i_rst_an && i_ena)
-        status_mat_inp = $fscanf(fid_mat_inp,"%d\n", i_fcw);
-      else
-        i_fcw = 'd0;
-	
-      if ($feof(fid_mat_inp)) begin
-        data_ready = 1'b1;
-      end
+  
+  assign w_ctrl = r_phase_accu[gp_phase_accu_width-1   -: 3];
+  assign w_addr = (!w_sin_cos_mirror) ?  r_phase_accu[gp_phase_accu_width-1-3 -: gp_rom_depth] : 
+                                        ~r_phase_accu[gp_phase_accu_width-1-3 -: gp_rom_depth];
+  
+  assign w_sin_sign       = w_ctrl[2];
+  assign w_sin_sinorcos   = w_ctrl[1]  ^ w_ctrl[0];
+  
+  assign w_cos_sign       = w_ctrl[2]  ^ w_ctrl[1];
+  assign w_cos_sinorcos   = w_ctrl[1] ~^ w_ctrl[0];
+  
+  assign w_sin_cos_mirror = w_ctrl[0];
+  
+  assign w_sel_sin_max = ( (w_sin_cos_mirror) && (w_addr == c_rom_depth-1) ) ? 1'b1 : 1'b0;
+  assign w_sel_cos_max = ( (w_sin_cos_mirror) && (w_addr == c_rom_depth-1) ) ? 1'b1 : 1'b0;
+         
+  always @(*)
+    begin: p_sin_reconstruction
+      case ({w_sin_sign,w_sin_sinorcos,w_sin_cos_mirror})
+        0: w_sin =                             $signed({1'b0,nco_sin_rom[w_addr]});
+	3: w_sin = (!w_sel_sin_max) ?          $signed({1'b0,nco_cos_rom[w_addr+1'b1]}) :          $signed({1'b0,nco_cos_max});
+	2: w_sin =                             $signed({1'b0,nco_cos_rom[w_addr]});
+	1: w_sin = (!w_sel_sin_max) ?          $signed({1'b0,nco_sin_rom[w_addr+1'b1]}) :          $signed({1'b0,nco_sin_max});
+	4: w_sin =                    -2'sd1 * $signed({1'b0,nco_sin_rom[w_addr]});
+	7: w_sin = (!w_sel_sin_max) ? -2'sd1 * $signed({1'b0,nco_cos_rom[w_addr+1'b1]}) : -2'sd1 * $signed({1'b0,nco_cos_max});
+	6: w_sin =                    -2'sd1 * $signed({1'b0,nco_cos_rom[w_addr]});
+	5: w_sin = (!w_sel_sin_max) ? -2'sd1 * $signed({1'b0,nco_sin_rom[w_addr+1'b1]}) : -2'sd1 * $signed({1'b0,nco_sin_max});
+	default: w_sin = $signed({(gp_rom_width+1){1'b0}});
+      endcase
     end
   
-  always @(posedge i_clk)
-    begin: MATLAB_RESPONSE
-      if (i_rst_an && i_ena)
-        status_mat_oup = $fscanf(fid_mat_oup,"%d %d\n", o_sin_mat, o_cos_mat);
+  always @(*)
+    begin: p_cos_reconstruction
+      case ({w_cos_sign,w_cos_sinorcos,w_sin_cos_mirror})
+        2: w_cos =                             $signed({1'b0,nco_cos_rom[w_addr]});
+	1: w_cos = (!w_sel_cos_max) ?          $signed({1'b0,nco_sin_rom[w_addr+1'b1]}) :          $signed({1'b0,nco_sin_max});
+	4: w_cos =                    -2'sd1 * $signed({1'b0,nco_sin_rom[w_addr]});
+	7: w_cos = (!w_sel_cos_max) ? -2'sd1 * $signed({1'b0,nco_cos_rom[w_addr+1'b1]}) : -2'sd1 * $signed({1'b0,nco_cos_max});
+	6: w_cos =                    -2'sd1 * $signed({1'b0,nco_cos_rom[w_addr]});
+	5: w_cos = (!w_sel_cos_max) ? -2'sd1 * $signed({1'b0,nco_sin_rom[w_addr+1'b1]}) : -2'sd1 * $signed({1'b0,nco_sin_max});
+	0: w_cos =                             $signed({1'b0,nco_sin_rom[w_addr]});
+	3: w_cos = (!w_sel_cos_max) ?          $signed({1'b0,nco_cos_rom[w_addr+1'b1]}) :          $signed({1'b0,nco_cos_max});
+	default: w_cos = $signed({(gp_rom_width+1){1'b0}});
+      endcase
     end
 
-  always @(negedge i_clk)
-    begin: ASSERT_RTL_vs_MATLAB
-      if (i_rst_an && i_ena)
-        diff     = o_sin_rtl - o_sin_mat; 
-	abs_diff = `ABS(diff);
-	if ( abs_diff > 1)
-	  begin 
-	    $error("### RTL = %d, MAT = %d", o_sin_rtl, o_sin_mat); error_count<= error_count + 1;
-	  end
-    end
-
-  `ifdef RTL
-    initial
-      begin: TEXTIO_WRITE_OUT 
-        $sformat(filename_rtl_oup,"%s%0d%s","./sim/testcases/response/response_tc_",`TESTCASE,"_rtl.dat");
-        fid_rtl_oup = $fopen(filename_rtl_oup, "w");
-        @(posedge data_ready)  $fclose(fid_rtl_oup);
-      end
-    
-    always @(posedge i_clk)
-      begin: RTL_RESPONSE
-        $fwrite(fid_rtl_oup,"%d\n",o_sin_rtl);
-      end
-  `endif
-  
-  sgen_nco #(
-    .gp_rom_width  	 (`P_ROM_WIDTH),
-    .gp_rom_depth  	 (`P_ROM_DEPTH),
-    .gp_phase_accu_width (`P_PHASEACCU_WIDTH)
-  ) dut (
-    .i_rst_an (i_rst_an),
-    .i_ena    (i_ena),
-    .i_clk    (s_clk),
-    .i_fcw    (i_fcw),
-    .o_sin    (o_sin_rtl),
-    .o_cos    (o_cos_rtl)
-  );
-
-  `ifdef VCD
-    initial
-       begin
-         $sformat(filename_vcd,"%s%0d%s","sgen_nco_",`TESTCASE,".vcd");
-         $dumpfile(filename_vcd);
-         $dumpvars(0,sgen_nco_tb);
-       end
-  `endif
+assign o_sin = w_sin;
+assign o_cos = w_cos;
           
 endmodule
