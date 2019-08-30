@@ -68,13 +68,13 @@ To design a new module (e.g. filt_ppd):
 The folder structure for each designed module is as follow (e.g. filt_ppd)
 
 - filt_ppd
-  |_ log
-  |_ octave
-  |_ rtl
-  |_ sim
-    |_testbench
-    |_ testcases
-      |_ response
-      |_ stimuli
-  |_ vcd
-  |_ vvp
+-  |_ log
+-  |_ octave
+-  |_ rtl
+-  |_ sim
+-    |_testbench
+-    |_ testcases
+-      |_ response
+-      |_ stimuli
+-  |_ vcd
+-  |_ vvp
