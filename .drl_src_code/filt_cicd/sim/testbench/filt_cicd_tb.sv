@@ -10,7 +10,7 @@ module filt_cicd_tb;
   reg       i_rst_an;
   reg       i_ena;
   reg       i_clk;
-  reg       s_clk;
+  wire      s_clk;
   
   reg [`P_INP_DATA_W-1:0] i_data;
   wire                 rdy;
@@ -44,7 +44,8 @@ module filt_cicd_tb;
   initial i_clk = 1'b0;
   always i_clk = #(CLK_PERIOD) ~i_clk;
   
-  initial s_clk = #1 dut.w_sclk;
+  assign s_clk = dut.w_sclk;
+  
   initial
     begin: TEXTIO_READ_IN
       $display("### INFO: RTL Simulation of FIR Filter.");
