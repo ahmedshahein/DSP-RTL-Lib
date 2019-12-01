@@ -19,7 +19,7 @@ CONFG_TOOL=false
 CONFG_GIT=false
 CONFG_DSN=false
 CONFG_PATH=false
-CONFG_SIM=false
+CONFG_SIM=
 CONFG_DEMO=false
 
 # HELP [EXIT 3]
