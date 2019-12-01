@@ -4,21 +4,21 @@
 
   nr_samples = 2^10;
   
-  p_decimation_factor = 4;
-  p_data_width        = 2;
-  p_comm_ccw          = 1;
-  p_mul_ccw           = 0;
-  p_tf_df             = 1;
-  p_coeff_length      = 12;
-  p_coeff_width       = 6; 
-  p_comm_reg_oup      = 1;
-  p_comm_phase        = 2
+  gp_idata_width       = 2;
+  gp_decimation_factor = 4;
+  gp_coeff_length      = 12;
+  gp_coeff_width       = 6; 
+  gp_tf_df             = 1;
+  gp_comm_reg_oup      = 1;
+  gp_comm_ccw          = 1;
+  gp_mul_ccw           = 0; 
+  gp_comm_phase        = 2;
   
   fs  = 1000;
   f   = [0 50 220 fs]/fs;
-  b   = remez(p_coeff_length-1, f, [1 1 0 0], [1 1]);
-  q_b = quantize(b, p_coeff_width, "midtread", "signed");
-  b   = round( (2^(p_coeff_width-1)-1) * q_b);
+  b   = remez(gp_coeff_length-1, f, [1 1 0 0], [1 1]);
+  q_b = quantize(b, gp_coeff_width, "midtread", "signed");
+  b   = round( (2^(gp_coeff_width-1)-1) * q_b);
   
   for i = 1 : 9,
     testcase = i;
@@ -42,10 +42,10 @@
       data(220:221) = 0; 
    
     case {3}
-      data = -2^(p_data_width-1):2^(p_data_width-1)-1;
+      data = -2^(gp_idata_width-1):2^(gp_idata_width-1)-1;
     
     case {4}
-      data = 2^(p_data_width-1)-1:-1:-2^(p_data_width-1);    
+      data = 2^(gp_idata_width-1)-1:-1:-2^(gp_idata_width-1);    
       
     case {5}
       fs = 1e3;
@@ -53,13 +53,13 @@
       f2 = fs/2;
       t = 1:1/fs:5;
       data = chirp (t, f1, 5, f2, "logarithmic");
-      q_data = quantize(data, p_data_width, "midtread", "signed");
-      data = round( 2^(p_data_width-1) * q_data );
+      q_data = quantize(data, gp_idata_width, "midtread", "signed");
+      data = round( 2^(gp_idata_width-1) * q_data );
       
     case {6}
       rand ("state", 42);
-      r_min = -2^(p_data_width-1);
-      r_max =  2^(p_data_width-1);
+      r_min = -2^(gp_idata_width-1);
+      r_max =  2^(gp_idata_width-1);
       r     = floor(r_min + (r_max - r_min)*rand(1, nr_samples));
       data = r;
     
@@ -71,8 +71,8 @@
       dc    = 0;
       c     = 10;
       t     = 0:1/fs:c/fo-1/fs;
-      data  = round( 2^(p_data_width-1) * (A * sin(2*pi*fo*t + phi) + dc) );
-      data(data==2^(p_data_width-1)) = 2^(p_data_width-1)-1;
+      data  = round( 2^(gp_idata_width-1) * (A * sin(2*pi*fo*t + phi) + dc) );
+      data(data==2^(gp_idata_width-1)) = 2^(gp_idata_width-1)-1;
   
     case {8}
       fs    = 1e3;
@@ -88,9 +88,9 @@
       r_max =  1;
       An = 0.2;
       r     = An * ( r_min + (r_max - r_min)*rand(1, length(data)) );
-      q_data = quantize(data+r, p_data_width, "midtread", "signed");
-      data = round( 2^(p_data_width-1) * q_data );      
-      data(data==2^(p_data_width-1)) = 2^(p_data_width-1)-1;
+      q_data = quantize(data+r, gp_idata_width, "midtread", "signed");
+      data = round( 2^(gp_idata_width-1) * q_data );      
+      data(data==2^(gp_idata_width-1)) = 2^(gp_idata_width-1)-1;
 
     case {9}
       %nr_samples = 2^12;
@@ -107,30 +107,30 @@
       r_max =  1;
       An = 0.25;
       r     = An * ( r_min + (r_max - r_min)*rand(1, length(data)) );
-      q_data = quantize(data+r, p_data_width, "midtread", "signed");
-      data = round( 2^(p_data_width-1) * q_data );      
-      data(data==2^(p_data_width-1)) = 2^(p_data_width-1)-1;
+      q_data = quantize(data+r, gp_idata_width, "midtread", "signed");
+      data = round( 2^(gp_idata_width-1) * q_data );      
+      data(data==2^(gp_idata_width-1)) = 2^(gp_idata_width-1)-1;
       
   endswitch
 
   %% INPUT STRUCT
   disp("### INFO: Generating defines files.");
-  defines.p_data_width        = p_data_width;
-  defines.p_decimation_factor = p_decimation_factor;
-  defines.p_coeff_length      = p_coeff_length;
-  defines.p_coeff_width       = p_coeff_width;
-  defines.p_tf_df             = p_tf_df;
-  defines.p_comm_reg_oup      = p_comm_reg_oup;
-  defines.p_comm_ccw          = p_comm_ccw;
-  defines.p_mul_ccw           = p_mul_ccw;  
-  defines.p_comm_phase        = p_comm_phase;
-  defines.testcase            = testcase;
+  defines.gp_idata_width       = gp_idata_width;
+  defines.gp_decimation_factor = gp_decimation_factor;
+  defines.gp_coeff_length      = gp_coeff_length;
+  defines.gp_coeff_width       = gp_coeff_width;
+  defines.gp_tf_df             = gp_tf_df;
+  defines.gp_comm_reg_oup      = gp_comm_reg_oup;
+  defines.gp_comm_ccw          = gp_comm_ccw;
+  defines.gp_mul_ccw           = gp_mul_ccw;  
+  defines.gp_comm_phase        = gp_comm_phase;
+  defines.testcase             = testcase;
   gen_defines(defines);
   %% COEFFICIENT GENERATION
-  gen_coeffs(b, p_coeff_width);
+  gen_coeffs(b, gp_coeff_width);
   %% RESPONSE GENERATION
   octave_data=data;
-  yy= downsample(filter(b,1,octave_data),p_decimation_factor,p_decimation_factor-1-p_comm_phase);
+  yy= downsample(filter(b,1,octave_data),gp_decimation_factor,gp_decimation_factor-1-gp_comm_phase);
   disp("### INFO: Generating response files.");
   filename_oup = strcat("response_tc_",num2str(testcase,"%d"),"_mat.dat");
   dlmwrite(filename_oup,yy,"\n");
