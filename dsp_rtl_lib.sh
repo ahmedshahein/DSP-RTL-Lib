@@ -50,32 +50,32 @@ if [ "$#" = 1 -a "$1" = "-help" -o "$1" = "-h" ]; then
        -git  | -g   : Clone the repository into the current folder.
        -design | -d : Design a certain moule from the DRL supported 
                       modules. This option must be accompanied with
-		      a parameters file. The parameters file has a
-		      dedicated template and naming convention.
-		      file_name = <module_name>_<instance_number>.param
-		      The <module_name> can be:
-		        filt_cicd
-			filt_cici
-			filt_fir
-			filt_mac
-			filt_ppd
-			filt_ppi
-			sgen_cordic
-			sgen_nco
-		      The <instance_number> is an indication how many instances
-		      do you want to generate from the same module. It starts
-		      from 1.
-		      P.S. If the .param file is not specified the module is generated based on the local parameters.
-		           The _<instance_number> option is not supported yet.
+                      a parameters file. The parameters file has a
+                      dedicated template and naming convention.
+                      file_name = <module_name>_<instance_number>.param
+                      The <module_name> can be:
+                        filt_cicd
+                        filt_cici
+                        filt_fir
+                        filt_mac
+                        filt_ppd
+                        filt_ppi
+                        sgen_cordic
+                        sgen_nco
+                      The <instance_number> is an indication how many instances
+                      do you want to generate from the same module. It starts
+                      from 1.
+                      P.S. If the .param file is not specified the module is generated based on the local parameters.
+                           The _<instance_number> option is not supported yet.
         -path | -p  : Set the path for generating the desired modules.
-	-sim | -s   : Execute a single simulation run.
-	              ./dsp_rtl_lib.sh -s <ARGUMENT_1> <ARGUMENT_2>
-		      ARGUMENT_1 == design name, e.g., filt_mac
-		      ARGUMENT_2 == test-case number, e.g. 1 - 9
-		      ./dsp_rtl_lib.sh -s filt_cici 3
-	-demo       : Execute the script with the following arguments for a 
-	              sample module design of an FIR filter.
-	              ./dsp_rtl_lib.sh -g -c -p ./ -d filt_cicd_1.param
+        -sim | -s   : Execute a single simulation run.
+                      ./dsp_rtl_lib.sh -s <ARGUMENT_1> <ARGUMENT_2>
+                      ARGUMENT_1 == design name, e.g., filt_mac
+                      ARGUMENT_2 == test-case number, e.g. 1 - 9
+                      ./dsp_rtl_lib.sh -s filt_cici 3
+        -demo       : Execute the script with the following arguments for a 
+                      sample module design of an FIR filter.
+                      ./dsp_rtl_lib.sh -g -c -p ./ -d filt_cicd_1.param
        
        Exit Status:-
          exit 1: no RTL tool is identified
@@ -85,9 +85,10 @@ if [ "$#" = 1 -a "$1" = "-help" -o "$1" = "-h" ]; then
          exit 5: faulty source sub-folder
          exit 6: wrong library folder/path
          exit 7: do not accept arguments -c and -t together
-	 exit 8: wrong tool chain setup
+         exit 8: wrong tool chain setup
          exit 9: do not overwrite the previous design
-	 
+         exit 10: octave does not exist, therefore, no verification is carried out
+ 
        Example:-
        ./dsp_rtl_lib.sh -chk
        ./dsp_rtl_lib.sh -t "iverilog"
@@ -115,7 +116,7 @@ else
         "-tool" | "-t")
           shift;
           CONFG_TOOL=true;
-	  CONFG_CHK=false;
+          CONFG_CHK=false;
           RTL_TOOL=$1;
           ;;
         "-git" | "-g")
@@ -131,44 +132,44 @@ else
         "-design" | "-d")
           shift;
           CONFG_DSN=true;
-	  suffix='_[0-9].param';
-	  file_path=$PWD/$1;
-          file_name=$1;	  
-	  dsn_name=$(echo $file_name | sed -e "s/$suffix//");
-	  DSN_PATH="$PWD/$dsn_name"
-	  echo $DSN_PATH
+          suffix='_[0-9].param';
+          file_path=$PWD/$1;
+          file_name=$1;          
+          dsn_name=$(echo $file_name | sed -e "s/$suffix//");
+          DSN_PATH="$PWD/$dsn_name"
+          echo $DSN_PATH
           export PRJ_DIR=$DSN_PATH
           export RTL_DIR=${DSN_PATH}/rtl
           export SIM_DIR=${DSN_PATH}/sim
-	  export incdir="${SIM_DIR}/testbench"
-	  export VVP_DIR=${DSN_PATH}/vvp
-	  export VCD_DIR=${DSN_PATH}/vcd
+          export incdir="${SIM_DIR}/testbench"
+          export VVP_DIR=${DSN_PATH}/vvp
+          export VCD_DIR=${DSN_PATH}/vcd
           ;;
-	"-sim" | "-s")
-	  shift;
-	  dsn_name=$1;
-	  shift
-	  tc=$1;
-	  CONFG_SIM=true;
-	  DSN_PATH="$PWD/$dsn_name"
-	  echo $DSN_PATH
+        "-sim" | "-s")
+          shift;
+          dsn_name=$1;
+          shift
+          tc=$1;
+          CONFG_SIM=true;
+          DSN_PATH="$PWD/$dsn_name"
+          echo $DSN_PATH
           export PRJ_DIR=$DSN_PATH
           export RTL_DIR=${DSN_PATH}/rtl
           export SIM_DIR=${DSN_PATH}/sim
-	  export incdir="${SIM_DIR}/testbench"
-	  export VVP_DIR=${DSN_PATH}/vvp
-	  export VCD_DIR=${DSN_PATH}/vcd	  
-	  ;;  
-	"-demo")
-	  CONFG_DEMO=true;
-	  CONFG_GIT=true;
-	  CONFG_CHK=true;
-	  CONFG_PATH=true;
-	  CONFG_DSN=true;
-	  ;;	
+          export incdir="${SIM_DIR}/testbench"
+          export VVP_DIR=${DSN_PATH}/vvp
+          export VCD_DIR=${DSN_PATH}/vcd          
+          ;;  
+        "-demo")
+          CONFG_DEMO=true;
+          CONFG_GIT=true;
+          CONFG_CHK=true;
+          CONFG_PATH=true;
+          CONFG_DSN=true;
+          ;;        
         *)
           echo "###$color_red_cmd ERROR$color_reset_cmd  : Invalid option, please check -h for help."
-	  exit 4
+          exit 4
           ;;
       esac
       shift
@@ -198,7 +199,7 @@ then
   cp .drl_param/filt_cicd_1.param ./
   suffix='_[0-9].param';
   file_path=$PWD/filt_cicd_1.param;
-  file_name=filt_cicd_1.param;	  
+  file_name=filt_cicd_1.param;          
   dsn_name=$(echo $file_name | sed -e "s/$suffix//");
   DSN_PATH="$path/$dsn_name"
   export PRJ_DIR=$DSN_PATH
@@ -236,7 +237,7 @@ then
       if hash vlog 2>/dev/null && hash vsim 2>/dev/null 
       then #MODELSIM
         echo "###$color_green_cmd INFO $color_reset_cmd  : ModelSim flow is installed for RTL!"
-	RTL_TOOL="modelsim"
+        RTL_TOOL="modelsim"
       else
         echo "###$color_red_cmd ERROR$color_reset_cmd: NO RTL FRONT-END FLOW IS INSTALLED!"
         echo "       Please install either Icarus Verilog or Verilator or ModelSim SE!"
@@ -253,6 +254,17 @@ then
     echo "###$color_green_cmd INFO $color_reset_cmd  : GTKwave is installed for waveform viewing!"
   fi
 
+fi
+
+# CHECKING OTAVE INSTALLATION
+OCTAVE_STATUS=$(command -v octave)
+if [ -z $OCTAVE_STATUS ]
+then #OCTAVE
+  echo "###$color_yellow_cmd WARNING$color_reset_cmd: GNU Octave is not installed!"
+  echo "             Stimuli and Response files will not be generated."
+  echo "             RTL verification will not be carried out!!!"
+else
+  echo "###$color_green_cmd INFO $color_reset_cmd  : GNU Octave is installed for RTL functional verification!"
 fi
 
 # CHECK LIBRARY PATH [EXIT 6]
@@ -317,12 +329,12 @@ then
   case $RTL_TOOL  in
     "iverilog")
       #export f=1
-      cmd_com="iverilog -y$RTL_DIR	\
-	-I$RTL_DIR -I$incdir	\
-	-g2012	\
-	-o ${VVP_DIR}/${dsn_name}_CNT_.vvp	\
-	-DVCD	\
-	${SIM_DIR}/testbench/${dsn_name}_tb.sv"
+      cmd_com="iverilog -y$RTL_DIR        \
+        -I$RTL_DIR -I$incdir        \
+        -g2012        \
+        -o ${VVP_DIR}/${dsn_name}_CNT_.vvp        \
+        -DVCD        \
+        ${SIM_DIR}/testbench/${dsn_name}_tb.sv"
 
       cmd_sim="vvp -l ${DSN_PATH}/log/tc_CNT_.log ${VVP_DIR}/${dsn_name}_CNT_.vvp"
       
@@ -383,9 +395,17 @@ then
     i=$((i+1))
   done < $file_path
   
-  cd octave
-  octave --no-gui --silent stimuli.m
-  cd ..
+  
+  if [ -z $OCTAVE_STATUS ]
+  then #OCTAVE
+    echo "### $color_yellow_cmd WARNING $color_reset_cmd: No functional verification to be carried out!"
+    echo "               GNU Octave is not installed."
+    exit 10
+  else
+    cd octave
+    octave --no-gui --silent stimuli.m
+    cd ..
+  fi
   
   FILES=$(ls ${PRJ_DIR}/sim/testcases/stimuli/stimuli_tc_*.dat)
 
@@ -414,7 +434,7 @@ then
 fi
 
 # EXECUTE A SINGLE SIMULATION RUN
-if $CONFG_SIM
+if [ $CONFG_SIM ] && [ ! -z $OCTAVE_STATUS ]
 then
   cd $dsn_name
   [ ! -d vvp ] && mkdir vvp
