@@ -56,7 +56,7 @@ endclass
   initial
     begin
       i_data = 8'sd0;
-      #500 i_data = 8'sd1;
+      #545 i_data = 8'sd1;
       #100 i_data = 8'sd2;
       #100 i_data = 8'sd3;
       #100 i_data = 8'sd4;

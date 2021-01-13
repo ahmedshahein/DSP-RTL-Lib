@@ -15,13 +15,13 @@ module filt_iir #(
   input  wire				i_rst_an,
   input  wire				i_ena,
   input  wire				i_clk,
-  input  wire	     [gp_inp_width-1:0] i_data,
+  input  wire signed [gp_inp_width-1:0] i_data,
   output wire signed [gp_oup_width-1:0] o_data
 );
 // -------------------------------------------------------------------
 generate
   if (gp_topology == 1)
-    begin
+    begin: IIR_DFII
       filt_iir_dfii #(
         .gp_inp_width 	             (gp_inp_width),   
 	.gp_oup_width	             (gp_oup_width),
@@ -38,7 +38,7 @@ generate
       );
     end
   else if (gp_topology == 2)
-    begin
+    begin: IIR_TFII
       filt_iir_tfii #(
         .gp_inp_width 	             (gp_inp_width),   
 	.gp_oup_width	             (gp_oup_width),
@@ -55,7 +55,7 @@ generate
       );    
     end
   else
-    begin
+    begin: IIR_DFI
       filt_iir_dfi #(
         .gp_inp_width 	             (gp_inp_width),   
 	.gp_oup_width	             (gp_oup_width),
@@ -89,7 +89,7 @@ module filt_iir_dfi #(
   input  wire				i_rst_an,
   input  wire				i_ena,
   input  wire				i_clk,
-  input  wire	     [gp_inp_width-1:0] i_data,
+  input  wire signed [gp_inp_width-1:0] i_data,
   output wire signed [gp_oup_width-1:0] o_data
 );
 // -------------------------------------------------------------------
@@ -238,14 +238,14 @@ module filt_iir_dfii #(
   parameter gp_inp_width		= 8,
   parameter gp_oup_width		= 16,
   parameter gp_feedforward_coeff_length	= 3,
-  parameter gp_feedforward_coeff_width	= gp_feedforward_coeff_length,
-  parameter gp_feedback_coeff_length	= 3,
+  parameter gp_feedforward_coeff_width	= 8,
+  parameter gp_feedback_coeff_length	= gp_feedforward_coeff_length,
   parameter gp_feedback_coeff_width	= 8
 ) (
   input  wire				i_rst_an,
   input  wire				i_ena,
   input  wire				i_clk,
-  input  wire	     [gp_inp_width-1:0] i_data,
+  input  wire signed [gp_inp_width-1:0] i_data,
   output wire signed [gp_oup_width-1:0] o_data
 );
 // -------------------------------------------------------------------
@@ -258,22 +258,22 @@ module filt_iir_tfii #(
   parameter gp_inp_width		= 8,
   parameter gp_oup_width		= 16,
   parameter gp_feedforward_coeff_length	= 3,
-  parameter gp_feedforward_coeff_width	= gp_feedforward_coeff_length,
-  parameter gp_feedback_coeff_length	= 3,
+  parameter gp_feedforward_coeff_width	= 8,
+  parameter gp_feedback_coeff_length	= gp_feedforward_coeff_length,
   parameter gp_feedback_coeff_width	= 8
 ) (
   input  wire				i_rst_an,
   input  wire				i_ena,
   input  wire				i_clk,
-  input  wire	     [gp_inp_width-1:0] i_data,
+  input  wire signed [gp_inp_width-1:0] i_data,
   output wire signed [gp_oup_width-1:0] o_data
 );
 // -------------------------------------------------------------------
 // ff_w = coeff_w + inp_w + coeff_l
-// fb_w = coeff_w + coeff_l + ff_w
+// fb_w = inp_w + ff_coeff_w + 2xcoeff_l + fb_coeff_w
 localparam coeff_length          = gp_feedforward_coeff_length;
-localparam iir_dly_width         = 8;
-localparam iir_add_width         = 8;
+localparam iir_dly_width         = gp_inp_width + gp_feedforward_coeff_width + gp_feedback_coeff_width + 2*coeff_length;
+localparam iir_add_width         = iir_dly_width;
 localparam feedforward_mul_width = gp_inp_width + gp_feedforward_coeff_width;
 localparam feedback_mul_width    = iir_add_width + gp_feedback_coeff_width;
 // IIR Feed-forward (numerator) coefficients
@@ -281,14 +281,14 @@ wire signed [gp_feedforward_coeff_width-1:0] feedforward_coeff [0:coeff_length-1
 // IIR Feed-forward (denominator) coefficients
 wire signed [gp_feedback_coeff_width-1   :0] feedback_coeff    [0:coeff_length-1];
 // Feed-back/forward local signals
-wire        [iir_dly_width*coeff_length-1:0] iir_dly;
+wire        [iir_dly_width*(coeff_length-1)-1:0] iir_dly;
 wire signed [iir_add_width*coeff_length-1   :0] iir_add;
 wire signed [feedforward_mul_width*coeff_length-1    :0] feedforward_mul;
 wire signed [feedback_mul_width*coeff_length-1      :0] feedback_mul;
 // -------------------------------------------------------------------
 `include "iir_coeff.v"
 // -------------------------------------------------------------------
-assign o_data = iir_add[(coeff_length-1)*iir_add_width +: iir_add_width];
+assign o_data = $signed(iir_add[(0)*iir_add_width +: iir_add_width]);
 genvar i;
 generate
   for (i=0; i<coeff_length; i=i+1)
@@ -325,24 +325,17 @@ generate
 	
     end
     
-  for (i=0; i<coeff_length; i=i+1)
+  for (i=0; i<coeff_length-1; i=i+1)
     begin        
-      if (i==0)
-        begin
-	  assign iir_dly[i*iir_dly_width +: iir_dly_width] = 'd0;
-	end
-      else
-        begin
-      	  dff #(
-      	    .gp_data_width (iir_dly_width)
-      	  ) feedforward_dl (
-      	    .i_rst_an (i_rst_an),
-	    .i_ena    (i_ena),
-	    .i_clk    (i_clk),
-	    .i_data   (iir_add[i*iir_dly_width +: iir_dly_width]),
-	    .o_data   (iir_dly[i*iir_dly_width +: iir_dly_width])
-      	  );	
-	end
+      dff #(
+        .gp_data_width (iir_dly_width)
+      ) feedforward_dl (
+        .i_rst_an (i_rst_an),
+        .i_ena    (i_ena),
+        .i_clk    (i_clk),
+        .i_data   (iir_add[(i+1)*iir_dly_width +: iir_dly_width]),
+        .o_data   (iir_dly[i*iir_dly_width +: iir_dly_width])
+      );    
     end
 endgenerate  
 
