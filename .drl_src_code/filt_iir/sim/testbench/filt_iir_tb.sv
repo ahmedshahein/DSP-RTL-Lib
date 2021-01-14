@@ -144,7 +144,7 @@ endclass
     .gp_feedforward_coeff_width  (8),
     .gp_feedback_coeff_length	 (3),
     .gp_feedback_coeff_width	 (8),
-    .gp_topology		 (2)
+    .gp_topology		 (1)
   ) dut (
     .i_rst_an (i_rst_an),
     .i_ena    (i_ena),

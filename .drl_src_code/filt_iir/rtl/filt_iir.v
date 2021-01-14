@@ -249,6 +249,96 @@ module filt_iir_dfii #(
   output wire signed [gp_oup_width-1:0] o_data
 );
 // -------------------------------------------------------------------
+// top-to-bottom -> 0:n-1
+localparam c_coeff_length  = gp_feedforward_coeff_length;
+localparam c_ff_mul_width  = gp_feedforward_coeff_width + gp_inp_width+ gp_feedforward_coeff_length;
+localparam c_ff_add_width  = c_ff_mul_width;
+localparam c_fb_mul_width  = c_ff_add_width + gp_feedback_coeff_width;
+localparam c_fb_add_width  = c_fb_mul_width + gp_feedback_coeff_length;
+localparam c_iir_dly_width = c_ff_add_width;
+// IIR Feed-forward (numerator) coefficients
+wire signed [gp_feedforward_coeff_width-1:0] feedforward_coeff [0:c_coeff_length-1];
+// IIR Feed-forward (denominator) coefficients
+wire signed [gp_feedback_coeff_width-1   :0] feedback_coeff    [0:c_coeff_length-1];
+
+wire [c_ff_add_width*gp_feedforward_coeff_length-1:0] ff_add;
+wire [c_ff_mul_width*gp_feedforward_coeff_length-1:0] ff_mul;
+wire [c_fb_add_width*gp_feedback_coeff_length-1   :0] fb_add;
+wire [c_fb_mul_width*gp_feedback_coeff_length-1   :0] fb_mul;
+wire [c_iir_dly_width*c_coeff_length-1            :c_iir_dly_width] iir_dly;
+// -------------------------------------------------------------------
+`include "iir_coeff.v"
+// -------------------------------------------------------------------
+assign o_data = $signed(fb_add[0*c_fb_add_width +: c_fb_add_width]);
+genvar i;
+generate
+  for (i=0; i<gp_feedforward_coeff_length; i=i+1)
+    begin: IIR_DFII_FF
+      if (i==0)
+        begin
+          assign ff_add[i*c_ff_add_width +: c_ff_add_width] = $signed(i_data) + $signed(ff_add[(i+1)*c_ff_add_width +: c_ff_add_width]);
+	  assign ff_mul[i*c_ff_mul_width +: c_ff_mul_width] = $signed(ff_add[i*c_ff_add_width +: c_ff_add_width]);
+	end
+      else if (i == gp_feedforward_coeff_length-1)
+        begin
+          assign ff_add[i*c_ff_add_width +: c_ff_add_width] = $signed(ff_mul[i*c_ff_mul_width +: c_ff_mul_width]);
+	  assign ff_mul[i*c_ff_mul_width +: c_ff_mul_width] = $signed(iir_dly[i*c_iir_dly_width +: c_iir_dly_width]) * $signed(feedback_coeff[i]);
+	end
+      else
+        begin
+          assign ff_add[i*c_ff_add_width +: c_ff_add_width] = $signed(ff_add[(i+1)*c_ff_add_width +: c_ff_add_width]) + $signed(ff_mul[i*c_ff_mul_width +: c_ff_mul_width]);
+	  assign ff_mul[i*c_ff_mul_width +: c_ff_mul_width] = $signed(iir_dly[i*c_iir_dly_width +: c_iir_dly_width]) * $signed(feedback_coeff[i]);
+	end
+    end
+    
+  for (i=0; i<gp_feedback_coeff_length; i=i+1)
+    begin: IIR_DFII_FB
+      if (i==0)
+        begin
+	  assign fb_mul[i*c_fb_mul_width +: c_fb_mul_width] = $signed(ff_mul[i*c_ff_mul_width +: c_ff_mul_width]) * $signed(feedforward_coeff[i]);
+	  assign fb_add[i*c_fb_add_width +: c_fb_add_width] = $signed(fb_mul[i*c_fb_mul_width +: c_fb_mul_width]) + $signed(fb_add[(i+1)*c_fb_add_width +: c_fb_add_width]);
+	end
+      else if (i==gp_feedback_coeff_length-1)
+        begin
+	  assign fb_mul[i*c_fb_mul_width +: c_fb_mul_width] = $signed(iir_dly[i*c_iir_dly_width +: c_iir_dly_width]) * $signed(feedforward_coeff[i]);
+	  assign fb_add[i*c_fb_add_width +: c_fb_add_width] = $signed(fb_mul[i*c_fb_mul_width +: c_fb_mul_width]);
+	end
+      else
+        begin
+	  assign fb_mul[i*c_fb_mul_width +: c_fb_mul_width] = $signed(iir_dly[i*c_iir_dly_width +: c_iir_dly_width]) * $signed(feedforward_coeff[i]);
+	  assign fb_add[i*c_fb_add_width +: c_fb_add_width] = $signed(fb_mul[i*c_fb_mul_width +: c_fb_mul_width]) + $signed(fb_add[(i+1)*c_fb_add_width +: c_fb_add_width]);
+	end
+    end
+    
+  for (i=1; i<c_coeff_length; i=i+1)
+    begin
+      if (i==1)
+        begin
+          dff #(
+            .gp_data_width (c_iir_dly_width)
+          ) iir_dly_1 (
+            .i_rst_an (i_rst_an),
+            .i_ena    (i_ena),
+            .i_clk    (i_clk),
+            .i_data   (ff_mul[(i-1)*c_iir_dly_width +: c_iir_dly_width]),
+            .o_data   (iir_dly[i*c_iir_dly_width +: c_iir_dly_width])
+          ); 	
+	end
+      else
+        begin
+          dff #(
+            .gp_data_width (c_iir_dly_width)
+          ) iir_dly_2_n (
+            .i_rst_an (i_rst_an),
+            .i_ena    (i_ena),
+            .i_clk    (i_clk),
+            .i_data   (iir_dly[(i-1)*c_iir_dly_width +: c_iir_dly_width]),
+            .o_data   (iir_dly[i*c_iir_dly_width +: c_iir_dly_width])
+          ); 	
+	end
+    end
+endgenerate
+
 endmodule
 
 // -------------------------------------------------------------------
