@@ -2,7 +2,7 @@
 // Copyright (C) 2019 Ahmed Shahein
 // -------------------------------------------------------------------
 `timescale 1ns/1ps
-//`include "defines.sv"
+`include "defines.sv"
 // -------------------------------------------------------------------
 module filt_iir_tb;
   time CLK_PERIOD = 50;
@@ -11,10 +11,10 @@ module filt_iir_tb;
   reg	    i_ena;
   reg	    i_clk;
   reg	    s_clk;
-  reg [8-1:0] i_data;
-  //reg [`P_INP_DATA_W-1:0] i_data;
+  //reg [8-1:0] i_data;
+  reg [`P_INP_W-1:0] i_data;
   wire  	       rdy;
-  //wire signed [`P_OUP_DATA_W-1:0] oup_data;
+  wire signed [`P_OUP_W-1:0] oup_data;
   reg				  data_ready;
   integer error_count=0;
   // READ-IN MATLAB STIMULI FILE  
@@ -25,9 +25,13 @@ module filt_iir_tb;
   reg [8*64:1]  		  filename_mat_oup;
   integer			  fid_mat_oup;
   integer			  status_mat_oup;
-  //reg signed [`P_OUP_DATA_W-1:0]       o_data_mat;
-  
-class debug #(int unsigned array_size = 57, int unsigned element_size = 19);
+  reg signed [`P_OUP_W-1:0]       o_data_mat;
+  integer nr_of_samples=0;
+  reg [8*64:1]                    filename_vcd;
+// -------------------------------------------------------------------
+// P.S. Must have SV license to enable the following function
+// ------------------------------------------------------------------- 
+/*class debug #(int unsigned array_size = 57, int unsigned element_size = 19);
   static function void print_debug_bus (signed [array_size-1:0] array, input integer nr_of_elements, input string msg="");
 
   for (int i=0; i<nr_of_elements; i++)
@@ -35,7 +39,7 @@ class debug #(int unsigned array_size = 57, int unsigned element_size = 19);
       $display("### INFO: Debug for %s ... At time %t value = %d", msg, $time, $signed(array[i*element_size +: element_size]));
     end
   endfunction
-endclass  
+endclass*/  
 // -------------------------------------------------------------------    
   initial
     begin
@@ -53,7 +57,7 @@ endclass
   initial i_clk = 1'b0;
   always i_clk = #(CLK_PERIOD) ~i_clk;
 
-  initial
+  /*initial
     begin
       i_data = 8'sd0;
       #545 i_data = 8'sd1;
@@ -76,75 +80,74 @@ endclass
       //debug #(38,19)::print_debug_bus(dut.feedback_delayline, 2, "DLY");
       //debug #(54,27)::print_debug_bus(dut.feedback_mul, 2, "MUL");
       //debug #(90,30)::print_debug_bus(dut.feedback_add, 3, "ADD");
-    end 
+    end*/ 
           
- /* initial assign s_clk = dut.w_sclk;
   initial
     begin: TEXTIO_READ_IN
       $display("### INFO: RTL Simulation of FIR Filter.");
       $display("### Testcase %d", `TESTCASE);
-      $write("### ");
-      $system($sformatf("date"));
+      //$write("### ");$system($sformatf("date"));
       $sformat(filename_mat_inp,"%s%0d%s","./sim/testcases/stimuli/stimuli_tc_",`TESTCASE,"_mat.dat");
       $sformat(filename_mat_oup,"%s%0d%s","./sim/testcases/response/response_tc_",`TESTCASE,"_mat.dat");
       $display("%s",filename_mat_inp);
       fid_mat_inp = $fopen(filename_mat_inp, "r");
       fid_mat_oup = $fopen(filename_mat_oup, "r");
       if ((fid_mat_inp == `NULL)||(fid_mat_oup == `NULL)) begin
-	$display("data_file handle was NULL");
-	$finish;
+        $display("data_file handle was NULL");
+        $finish;
       end
       
       @(posedge data_ready) 
-	begin 
-      $fclose(fid_mat_inp); 
-      $fclose(fid_mat_oup); 
+        begin 
+	  $fclose(fid_mat_inp); 
+	  $fclose(fid_mat_oup); 
 
-      if (error_count>0)
-	    $display("### INFO: Testcase FAILED");
-	  else
-	    $display("### INFO: Testcase PASSED");
-	
-      $finish; 
-    end
+	  if (error_count>0)
+            $display("### INFO: Testcase FAILED");
+          else
+            $display("### INFO: Testcase PASSED with %d samples", nr_of_samples);
+	    
+  	  $finish; 
+	end
     end
     
   always @(posedge i_clk)
     begin: MATLAB_STIMULI
-      if (i_rst_an && i_ena)
-	status_mat_inp = $fscanf(fid_mat_inp,"%d\n", i_data);
+      if (i_rst_an && i_ena) begin
+        status_mat_inp = $fscanf(fid_mat_inp,"%d\n", i_data);
+	nr_of_samples <= nr_of_samples + 1;
+      end
       else
-	i_data = AMPd0;
-    
+        i_data = 'd0;
+	
       if ($feof(fid_mat_inp)) begin
-	data_ready = 1'b1;
+        data_ready = 1'b1;
       end
     end
   
-  always @(negedge s_clk)
+  always @(posedge i_clk)
     begin: MATLAB_RESPONSE
       if (i_rst_an && i_ena)
-	status_mat_oup = $fscanf(fid_mat_oup,"%d\n", o_data_mat);
+        status_mat_oup = $fscanf(fid_mat_oup,"%d\n", o_data_mat);
     end
 
-  always @(negedge s_clk)
+  always @(negedge i_clk)
     begin
       if (i_rst_an && i_ena)
-	assert (oup_data == o_data_mat) 
-    else
-      begin 
-	$error("### RTL = %d, MAT = %d", oup_data, o_data_mat); error_count<= error_count + 1;
-      end
-    end*/
+        if (oup_data != o_data_mat) 
+	  begin 
+	    $error("### RTL = %d, MAT = %d", oup_data, o_data_mat); error_count<= error_count + 1;
+	  end
+    end
       
   filt_iir #(
-    .gp_inp_width		 (8),   
-    .gp_oup_width		 (30),
-    .gp_feedforward_coeff_length (3),
-    .gp_feedforward_coeff_width  (8),
-    .gp_feedback_coeff_length	 (3),
-    .gp_feedback_coeff_width	 (8),
-    .gp_topology		 (1)
+    .gp_inp_width		 (`P_INP_W),   
+    .gp_oup_width		 (`P_OUP_W),
+    .gp_feedforward_coeff_length (`P_FF_COEFF_L),
+    .gp_feedforward_coeff_width  (`P_FF_COEFF_W),
+    .gp_feedback_coeff_length	 (`P_FB_COEFF_L),
+    .gp_feedback_coeff_width	 (`P_FB_COEFF_W),
+    .gp_topology		 (`P_TOPOLOGY)
   ) dut (
     .i_rst_an (i_rst_an),
     .i_ena    (i_ena),
@@ -152,5 +155,14 @@ endclass
     .i_data   (i_data),
     .o_data   (oup_data)
   );
+
+`ifdef VCD
+  initial
+     begin
+       $sformat(filename_vcd,"%s%0d%s","filt_iir_",`TESTCASE,".vcd");
+       $dumpfile(filename_vcd);
+       $dumpvars(0,filt_iir_tb);
+     end
+`endif
     
 endmodule

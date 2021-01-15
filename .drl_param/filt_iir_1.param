@@ -1,0 +1,7 @@
+gp_inp_width		    = 8
+gp_oup_width		    = 16
+gp_feedforward_coeff_length = 3
+gp_feedforward_coeff_width  = 8
+gp_feedback_coeff_length    = 3
+gp_feedback_coeff_width	    = 8
+gp_topology                 = 0 
